@@ -76,7 +76,7 @@ void MainScene::update(float f)
 		if (my_plane->isActive())
 			my_plane->update();
 
-	log("touch point:%f,%f",touchPoint.x,touchPoint.y);
+	//log("touch point:%f,%f",touchPoint.x,touchPoint.y);
 }
 
 bool MainScene::onTouchBegan(cocos2d::Touch* pTouch, cocos2d::Event*)
@@ -147,11 +147,22 @@ void MainScene::onTouchEnded(cocos2d::Touch* pTouch, cocos2d::Event* pEvent)
 
 		Point touch = pTouch->getLocation();//返回点击的位置  
 
-		Rect select_rect{ this->touchPoint.x, this->touchPoint.y, touch.x - this->touchPoint.x, touch.y - this->touchPoint.y };
-
+		log("Last touch: (%f, %f), Touch: (%f, %f)", this->touchPoint.x, this->touchPoint.y, touch.x, touch.y);
+		/*float min_x = (this->touchPoint.x < touch.x) ? (this->touchPoint.x) : (touch.x);
+		float max_x = (this->touchPoint.x >= touch.x) ? (this->touchPoint.x) : (touch.x);
+		float min_y = (this->touchPoint.y < touch.y) ? (this->touchPoint.y) : (touch.y);
+		float max_y = (this->touchPoint.y >= touch.y) ? (this->touchPoint.y) : (touch.y);
+		Rect select_rect{ min_x, min_y, max_x - min_x, max_y - min_y};*/
+		Rect select_rect{ MIN(this->touchPoint.x, touch.x), MIN(this->touchPoint.y, touch.y), abs(this->touchPoint.x - touch.x), abs(this->touchPoint.y - touch.y) };
+		log("Select Rect: O(%f, %f), width %f, height %f", select_rect.origin.x, select_rect.origin.y, select_rect.size.width, select_rect.size.height);
+	
 		for (auto my_plane : my_planes)
+		{
+			log("Plane Position: (%f, %f)", my_plane->getPosition().x, my_plane->getPosition().y);
+			log("Plane Rect: O(%f, %f), width %f, height %f", my_plane->getBoundingBox().origin.x, my_plane->getBoundingBox().origin.y, my_plane->getBoundingBox().size.width, my_plane->getBoundingBox().size.height);
 			if (select_rect.containsPoint(my_plane->getPosition()))
 				my_plane->select();
+		}
 	}
 }
 

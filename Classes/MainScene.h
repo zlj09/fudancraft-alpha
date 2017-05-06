@@ -10,6 +10,7 @@ public:
 	bool isActive() { return active; }
 	bool isSelected() { return selected; }
 	void select() { selected = true; }
+	void unselect() { selected = false; }
 	void activate() { active = true; }
 	void setDest(cocos2d::Point destination) { this->dest = destination; }
 	static Airplane* createPlane(const std::string& filename)
