@@ -24,8 +24,18 @@ public:
 	bool isActive() { return active; }
 	bool isAlive() { return alive; }
 	bool isSelected() { return selected; }
-	void select() { selected = true; }
-	void unselect() { selected = false; }
+	void unselect()
+	{
+		selected = false;
+		if (hpbar)
+			hpbar->setVisible(false);
+	}
+	void select() 
+	{ 
+		selected = true; 
+		if (hpbar)
+			hpbar->setVisible(true);
+	}
 	void activate() { active = true; }
 	void deactivate() { active = false; }
 	void setDest(cocos2d::Point destination) { this->dest = destination; }
@@ -64,7 +74,7 @@ private:
 	const int atk_range = 100;
 	const int atk_period = 20;
 	const int hp_max = 100;
-	const float move_speed = 10.0;
+	const float move_speed = 10.0f;
 
 	cocos2d::Point dest;
 };
