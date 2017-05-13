@@ -10,7 +10,7 @@ class Unit;
 class HPBar : public cocos2d::DrawNode
 {
 public:
-	void update();
+	void update(float f) override;
 	CREATE_FUNC(HPBar);
 	void monitor(Unit* _owner) { owner = _owner; }
 private:
@@ -23,13 +23,18 @@ class Unit : public cocos2d::Sprite
 {
 public:
 	static Unit* create(const std::string& filename);
-	virtual void initProperties();
+
+	virtual void setProperties();
+	virtual void update(float f) override;
+
+	void initHPBar();
 	void addToMaps(cocos2d::TMXTiledMap* _tiled_map, GridMap* _grid_map);
 	GridPoint getGridPosition();
-private:
+protected:
+	int id;
 	int state;
 	int target_id;
-	bool selected = 0;
+	bool selected;
 
 	int cd;
 	int hp;
@@ -45,11 +50,19 @@ private:
 	GridMap* grid_map;
 
 	HPBar* hpbar;
+
+	friend void HPBar::update(float ft);
 };
 
-class UnitManager
+class UnitManager : public cocos2d::Ref
 {
-
+public:
+	CREATE_FUNC(UnitManager);
+	bool init();
+private:
+	cocos2d::Map<int, Unit*> id_map;
+	std::vector<Unit*> own_units;
+	std::vector<Unit*> enemy_units;
 };
 
 #endif
