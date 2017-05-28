@@ -71,7 +71,9 @@ public:
 	GridPoint getGridPosition();
 	void setGridPath(const MsgGridPath& _grid_path);
 	void setState(int _state);
+	int getState() const;
 	bool hasArrivedAtDest();
+	bool updateGridPostion();
 
 	GridPath planToMoveTo(const GridPoint& dest)
 	{

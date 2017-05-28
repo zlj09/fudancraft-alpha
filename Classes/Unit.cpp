@@ -86,6 +86,33 @@ void Unit::setState(int _state)
 	state = _state;
 }
 
+int Unit::getState() const
+{
+	return(state);
+}
+
+bool Unit::updateGridPostion()
+{
+	if (state == 1)
+	{
+		GridPoint tmp_gp = getGridPosition();
+		if (cur_pos == tmp_gp)
+			return(true);
+		if (grid_map->occupyPosition(tmp_gp))
+		{
+			grid_map->leavePosition(cur_pos);
+			cur_pos = tmp_gp;
+			return(true);
+		}
+		else
+		{
+			state = 0;
+			return(false);
+		}
+	}
+	return(true);
+}
+
 void Unit::addToMaps(TMXTiledMap* _tiled_map, GridMap* _grid_map)
 {
 	tiled_map = _tiled_map;
@@ -149,6 +176,14 @@ void UnitManager::setPlayerID(int _player_id)
 
 void UnitManager::updateUnitsState()
 {
+	for (const auto& id : id_map.keys())
+		if (!id_map.at(id)->updateGridPostion())
+		{
+			Unit* unit = id_map.at(id);
+			//GridPath grid_path = unit->planToMoveTo(unit->final_dest);
+			//msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_MOV, id, 0, 0, player_id, 1, grid_path);
+		}
+
 	for (int i = 0; i < msgs->game_message_size(); i++)
 	{
 		GameMessage msg = msgs->game_message(i);

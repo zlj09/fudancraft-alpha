@@ -3,6 +3,11 @@
 
 USING_NS_CC;
 
+bool GridPoint::operator==(const GridPoint& gp2) const
+{
+	return(x == gp2.x && y == gp2.y);
+}
+
 GridMap* GridMap::create(const cocos2d::TMXTiledMap * tiled_map)
 {
 	GridMap *ret = new (std::nothrow) GridMap();
@@ -35,14 +40,24 @@ GridPoint GridMap::getGridPoint(const Point& p)
 	return(GridPoint(int(p.x) / grid_width, int(p.y) / grid_height));
 }
 
-void GridMap::occupyPosition(const GridPoint& pos)
+bool GridMap::occupyPosition(const GridPoint& pos)
 {
-	gmap[pos.x][pos.y] = 1;
+	if (!gmap[pos.x][pos.y])
+	{
+		gmap[pos.x][pos.y] = 1;
+		return(1);
+	}
+	return(0);
 }
 
-void GridMap::occupyPosition(const Point& pos)
+bool GridMap::occupyPosition(const Point& pos)
 {
-	occupyPosition(getGridPoint(pos));
+	return(occupyPosition(getGridPoint(pos)));
+}
+
+void GridMap::leavePosition(const GridPoint& pos)
+{
+	gmap[pos.x][pos.y] = 0;
 }
 
 const std::vector<std::vector<int>>& GridMap::getLogicalGridMap()
