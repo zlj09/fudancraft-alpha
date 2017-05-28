@@ -49,3 +49,11 @@ const std::vector<std::vector<int>>& GridMap::getLogicalGridMap()
 {
 	return(gmap);
 }
+
+bool GridMap::hasApproached(const Point& cur_fp, const GridPoint& dest_gp)
+{
+	Point dest_fp = getPoint(dest_gp);
+	if ((dest_fp - cur_fp).length() < POS_OFFSET)
+		return(true);
+	return(false);
+}

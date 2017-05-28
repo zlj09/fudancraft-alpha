@@ -70,19 +70,57 @@ GridPoint Unit::getGridPosition()
 		return(GridPoint(0, 0));
 }
 
+void Unit::setGridPath(const MsgGridPath& _msg_grid_path)
+{
+	int grid_point_size = _msg_grid_path.grid_point_size();
+	grid_path = GridPath(grid_point_size);
+	for (int i = 0; i < grid_point_size; i++)
+		grid_path[grid_point_size - 1 - i] = GridPoint{ _msg_grid_path.grid_point(i).x(), _msg_grid_path.grid_point(i).y() };
+	final_dest = grid_path[0];
+	cur_dest = grid_path.back();
+	grid_path.pop_back();
+}
+
+void Unit::setState(int _state)
+{
+	state = _state;
+}
+
 void Unit::addToMaps(TMXTiledMap* _tiled_map, GridMap* _grid_map)
 {
 	tiled_map = _tiled_map;
 	grid_map = _grid_map;
 
+	cur_pos = _grid_map->getGridPoint(getPosition());
+
 	_tiled_map->addChild(this, 1);
 
-	_grid_map->occupyPosition(getPosition());
+	_grid_map->occupyPosition(cur_pos);
+}
+
+bool Unit::hasArrivedAtDest()
+{
+	return(grid_map->hasApproached(getPosition(), cur_dest));
 }
 
 void Unit::update(float dt)
 {
+	if (state == 1)
+	{
+		auto esp = (grid_map->getPoint(cur_dest) - getPosition()).getNormalized();
+		setPosition(getPosition() + esp * move_speed);
 
+		if (hasArrivedAtDest())
+			if (grid_path.size())
+			{
+				cur_dest = grid_path.back();
+				grid_path.pop_back();
+			}
+			else
+			{
+				state = 0;
+			}
+	}
 }
 
 bool UnitManager::init()
@@ -127,7 +165,12 @@ void UnitManager::updateUnitsState()
 			if (msg.cmd_code() == GameMessage::CmdCode::GameMessage_CmdCode_MOV)
 			{
 				log("Unit ID: %d, Next Point(%d, %d)", msg.unit_0(), msg.grid_path().grid_point(0).x(), msg.grid_path().grid_point(0).y());
-
+				Unit* u0 = id_map.at(msg.unit_0());
+				if (u0)
+				{
+					u0->setGridPath(msg.grid_path());
+					u0->setState(1);
+				}
 			}
 	}
 	msgs->clear_game_message();
@@ -150,6 +193,7 @@ Unit* UnitManager::createNewUnit(int camp, int unit_type, GridPoint crt_gp)
 	nu->initHPBar();
 
 	nu->addToMaps(tiled_map, grid_map);
+	nu->schedule(schedule_selector(Unit::update));
 
 	return(nu);
 }
@@ -207,7 +251,7 @@ void UnitManager::selectUnits(Point select_point)
 			log("Unit ID: %d, plan to move to:(%f, %f)", id, select_point.x, select_point.y);
 			Unit* unit = id_map.at(id);
 			GridPath grid_path = unit->planToMoveTo(grid_map->getGridPoint(select_point));
-			msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_MOV, next_id, 0, 0, player_id, 1, grid_path);
+			msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_MOV, id, 0, 0, player_id, 1, grid_path);
 		}
 		return;
 	}

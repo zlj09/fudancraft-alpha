@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cocos2d.h"
+#include "fudancraft.h"
 
 struct GridPoint
 {
@@ -25,6 +26,8 @@ public:
 	void occupyPosition(const GridPoint& pos);
 	void occupyPosition(const cocos2d::Point& pos);
 	const std::vector<std::vector<int>>& getLogicalGridMap();
+
+	bool hasApproached(const cocos2d::Point& cur_fp, const GridPoint& dest_gp);
 private:
 	bool initWithTiledMap(const cocos2d::TMXTiledMap* tiled_map);
 	std::vector<std::vector<int>> gmap;

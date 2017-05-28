@@ -31,7 +31,6 @@ public:
 	void setTiledMap(cocos2d::TMXTiledMap* _tiledMap);
 	void setGridMap(GridMap* _grid_map);
 	void setPlayerID(int _player_id);
-	void setGridPath();
 	void updateUnitsState();
 
 	void initiallyCreateUnits();
@@ -70,6 +69,9 @@ public:
 	void hideHPBar();
 	void addToMaps(cocos2d::TMXTiledMap* _tiled_map, GridMap* _grid_map);
 	GridPoint getGridPosition();
+	void setGridPath(const MsgGridPath& _grid_path);
+	void setState(int _state);
+	bool hasArrivedAtDest();
 
 	GridPath planToMoveTo(const GridPoint& dest)
 	{
@@ -87,6 +89,9 @@ protected:
 	int target_id;
 	bool selected;
 	GridPath grid_path;
+	GridPoint final_dest;
+	GridPoint cur_pos;
+	GridPoint cur_dest;
 
 	int cd;
 	int hp;

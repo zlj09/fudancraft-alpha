@@ -7,3 +7,5 @@
 
 #define MIN_SELECT_RECT_SIZE 10
 
+#define POS_OFFSET 10
+
