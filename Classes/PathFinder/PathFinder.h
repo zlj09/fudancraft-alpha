@@ -2,24 +2,13 @@
 #define PATHFINDER_H
 
 #include<vector>
+#include "GridMap.h"
 
 enum { UNOCCUPIED, OCCUPIED, START, TERMINAL, INOPEN, INCLOSE };
 const int DIRECTION[8][2] = { { -1,-1 },{ -1,0 },{ -1,1 },{ 0,-1 },{ 0,1 },{ 1,-1 },{ 1,0 },{ 1,1 } };
 const int DISTANCE = 10;
 
-class GridPoint
-{
-private:
-	int m_x;
-	int m_y;
-public:
-	GridPoint();
-	GridPoint(int x, int y);
-	int getX();
-	void setX(int x);
-	int getY();
-	void setY(int Y);
-};
+
 
 class Grid
 {

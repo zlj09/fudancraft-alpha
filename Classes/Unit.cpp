@@ -1,6 +1,7 @@
 #include "Unit.h"
 #include "AdvancedUnit.h"
 
+
 USING_NS_CC;
 
 void HPBar::update(float dt)
@@ -75,7 +76,7 @@ void Unit::setGridPath(const MsgGridPath& _msg_grid_path)
 	int grid_point_size = _msg_grid_path.grid_point_size();
 	grid_path = GridPath(grid_point_size);
 	for (int i = 0; i < grid_point_size; i++)
-		grid_path[grid_point_size - 1 - i] = GridPoint{ _msg_grid_path.grid_point(i).x(), _msg_grid_path.grid_point(i).y() };
+		grid_path[i] = GridPoint{ _msg_grid_path.grid_point(i).x(), _msg_grid_path.grid_point(i).y() };
 	final_dest = grid_path[0];
 	cur_dest = grid_path.back();
 	grid_path.pop_back();
@@ -96,6 +97,14 @@ bool Unit::updateGridPostion()
 	if (state == 1)
 	{
 		GridPoint tmp_gp = getGridPosition();
+		/*Point real_pos = getPosition();
+		
+		if (hasArrivedAtDest() && !grid_path.size())
+		{
+			log("Unit ID: %d, Final Dest: (%d, %d), Arrived at: (%d, %d), Real Position: (%f, %f)", id, final_dest.x, final_dest.y, tmp_gp.x, tmp_gp.y, real_pos.x, real_pos.y);
+			state = 0;
+		}*/
+
 		if (cur_pos == tmp_gp)
 			return(true);
 		if (grid_map->occupyPosition(tmp_gp))
@@ -110,6 +119,26 @@ bool Unit::updateGridPostion()
 			return(false);
 		}
 	}
+
+	if (state == 2)
+	{
+		GridPoint tmp_gp = getGridPosition();
+		state = 0;
+		if (cur_pos == tmp_gp)
+			return(true);
+		if (grid_map->occupyPosition(tmp_gp))
+		{
+			grid_map->leavePosition(cur_pos);
+			cur_pos = tmp_gp;
+			return(true);
+		}
+		else
+		{
+			state = 0;
+			return(true);
+		}
+	}
+
 	return(true);
 }
 
@@ -127,14 +156,14 @@ void Unit::addToMaps(TMXTiledMap* _tiled_map, GridMap* _grid_map)
 
 bool Unit::hasArrivedAtDest()
 {
-	return(grid_map->hasApproached(getPosition(), cur_dest));
+	return(grid_map->hasApproached(getPosition(), cur_dest) && getGridPosition() == cur_dest);
 }
 
 void Unit::update(float dt)
 {
 	if (state == 1)
 	{
-		auto esp = (grid_map->getPoint(cur_dest) - getPosition()).getNormalized();
+		auto esp = (grid_map->getPointWithOffset(cur_dest) - getPosition()).getNormalized();
 		setPosition(getPosition() + esp * move_speed);
 
 		if (hasArrivedAtDest())
@@ -145,7 +174,7 @@ void Unit::update(float dt)
 			}
 			else
 			{
-				state = 0;
+				state = 2;
 			}
 	}
 }
@@ -180,9 +209,10 @@ void UnitManager::updateUnitsState()
 		if (!id_map.at(id)->updateGridPostion())
 		{
 			Unit* unit = id_map.at(id);
-			//GridPath grid_path = unit->planToMoveTo(unit->final_dest);
-			//msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_MOV, id, 0, 0, player_id, 1, grid_path);
+			GridPath grid_path = unit->planToMoveTo(unit->final_dest);
+			msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_MOV, id, 0, 0, player_id, 1, grid_path);
 		}
+
 
 	for (int i = 0; i < msgs->game_message_size(); i++)
 	{
@@ -199,6 +229,8 @@ void UnitManager::updateUnitsState()
 		else
 			if (msg.cmd_code() == GameMessage::CmdCode::GameMessage_CmdCode_MOV)
 			{
+				if (!msg.grid_path().grid_point_size())
+					continue;
 				log("Unit ID: %d, Next Point(%d, %d)", msg.unit_0(), msg.grid_path().grid_point(0).x(), msg.grid_path().grid_point(0).y());
 				Unit* u0 = id_map.at(msg.unit_0());
 				if (u0)
@@ -226,7 +258,7 @@ Unit* UnitManager::createNewUnit(int camp, int unit_type, GridPoint crt_gp)
 	nu->setProperties();
 	nu->setPosition(grid_map->getPoint(crt_gp));
 	nu->initHPBar();
-
+	nu->setAnchorPoint(Vec2(0.5, 0.5));
 	nu->addToMaps(tiled_map, grid_map);
 	nu->schedule(schedule_selector(Unit::update));
 
@@ -285,7 +317,7 @@ void UnitManager::selectUnits(Point select_point)
 		{
 			log("Unit ID: %d, plan to move to:(%f, %f)", id, select_point.x, select_point.y);
 			Unit* unit = id_map.at(id);
-			GridPath grid_path = unit->planToMoveTo(grid_map->getGridPoint(select_point));
+			GridPath grid_path = unit->planToMoveTo(grid_map->getGridPointWithOffset(select_point));	//ÃÖ²¹ÉáÈëÎó²î
 			msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_MOV, id, 0, 0, player_id, 1, grid_path);
 		}
 		return;

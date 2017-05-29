@@ -25,10 +25,12 @@ public:
 	static GridMap* create(const cocos2d::TMXTiledMap * tiled_map);
 	cocos2d::Point getPoint(const GridPoint& gp);
 	GridPoint getGridPoint(const cocos2d::Point& p);
+	cocos2d::Point getPointWithOffset(const GridPoint& gp);
+	GridPoint getGridPointWithOffset(const cocos2d::Point& p);
 	bool occupyPosition(const GridPoint& pos);
 	bool occupyPosition(const cocos2d::Point& pos);
 	void leavePosition(const GridPoint& pos);
-	const std::vector<std::vector<int>>& getLogicalGridMap();
+	std::vector<std::vector<int>>& getLogicalGridMap();
 
 	bool hasApproached(const cocos2d::Point& cur_fp, const GridPoint& dest_gp);
 private:
@@ -36,4 +38,5 @@ private:
 	std::vector<std::vector<int>> gmap;
 	int map_width, map_height;
 	int grid_width, grid_height;
+	cocos2d::Vec2 offset_vec;
 };

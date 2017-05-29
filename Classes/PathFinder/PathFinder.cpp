@@ -1,37 +1,5 @@
 #include "PathFinder.h"
 
-GridPoint::GridPoint()
-{
-	m_x = 0;
-	m_y = 0;
-}
-
-GridPoint::GridPoint(int x, int y)
-{
-	m_x = x;
-	m_y = y;
-}
-
-int GridPoint::getX()
-{
-	return m_x;
-}
-
-void GridPoint::setX(int x)
-{
-	m_x = x;
-}
-
-int GridPoint::getY()
-{
-	return m_y;
-}
-
-void GridPoint::setY(int y)
-{
-	m_y = y;
-}
-
 Grid::Grid()
 {
 	this->m_flag = UNOCCUPIED;

@@ -6,6 +6,7 @@
 #include "GridMap.h"
 #include "GameMessage.pb.h"
 #include "fudancraft.h"
+#include "PathFinder/PathFinder.h"
 
 class Unit;
 class UnitManager;
@@ -75,15 +76,19 @@ public:
 	bool hasArrivedAtDest();
 	bool updateGridPostion();
 
-	GridPath planToMoveTo(const GridPoint& dest)
+	GridPath planToMoveTo(GridPoint& dest)
 	{
 		return(searchForPath(grid_map->getLogicalGridMap(), getGridPosition(), dest));
 	}
-	GridPath searchForPath(const std::vector<std::vector<int>>& gmap, const GridPoint& start, const GridPoint& dest)
+	GridPath searchForPath(std::vector<std::vector<int>>& gmap, const GridPoint& start, const GridPoint& dest)
 	{
-		GridPath _grid_path;
+		/*GridPath _grid_path;
 		_grid_path.push_back(GridPoint(start.x, dest.y));
-		_grid_path.push_back(GridPoint(dest.x, dest.y));
+		_grid_path.push_back(GridPoint(dest.x, dest.y));*/
+		PathFinder path_finder(gmap, start.x, start.y, dest.x, dest.y);
+		path_finder.searchPath();
+		path_finder.generatePath();
+		GridPath _grid_path = path_finder.getPath();
 		return(_grid_path);
 	}
 protected:
@@ -107,6 +112,8 @@ protected:
 
 	cocos2d::TMXTiledMap* tiled_map = nullptr;
 	GridMap* grid_map = nullptr;
+
+	UnitManager* unit_manager = nullptr;
 
 	HPBar* hpbar = nullptr;
 
