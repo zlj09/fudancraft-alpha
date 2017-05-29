@@ -26,6 +26,8 @@ private:
 class UnitManager : public cocos2d::Ref
 {
 public:
+	int player_id = 0;
+
 	CREATE_FUNC(UnitManager);
 	bool init();
 	void setMessageSet(GameMessageSet* _msgs);
@@ -33,6 +35,7 @@ public:
 	void setGridMap(GridMap* _grid_map);
 	void setPlayerID(int _player_id);
 	void updateUnitsState();
+	void updatePathMessage(int _unit_id, const GridPath& _grid_path);
 
 	void initiallyCreateUnits();
 	void selectUnits(cocos2d::Point select_point);
@@ -47,9 +50,8 @@ private:
 	cocos2d::TMXTiledMap* tiled_map = nullptr;
 	GridMap* grid_map = nullptr;
 	int next_id = 1;
-	int player_id = 0;
 
-	Unit* createNewUnit(int camp, int uint_type, GridPoint crt_gp);
+	Unit* createNewUnit(int id, int camp, int uint_type, GridPoint crt_gp);
 	void deselectAllUnits();
 
 };
@@ -59,6 +61,7 @@ class Unit : public cocos2d::Sprite
 public:
 	int id;
 	int camp = 0;
+	UnitManager* unit_manager = nullptr;
 
 	static Unit* create(const std::string& filename);
 
@@ -82,9 +85,6 @@ public:
 	}
 	GridPath searchForPath(std::vector<std::vector<int>>& gmap, const GridPoint& start, const GridPoint& dest)
 	{
-		/*GridPath _grid_path;
-		_grid_path.push_back(GridPoint(start.x, dest.y));
-		_grid_path.push_back(GridPoint(dest.x, dest.y));*/
 		PathFinder path_finder(gmap, start.x, start.y, dest.x, dest.y);
 		path_finder.searchPath();
 		path_finder.generatePath();
@@ -112,8 +112,6 @@ protected:
 
 	cocos2d::TMXTiledMap* tiled_map = nullptr;
 	GridMap* grid_map = nullptr;
-
-	UnitManager* unit_manager = nullptr;
 
 	HPBar* hpbar = nullptr;
 
