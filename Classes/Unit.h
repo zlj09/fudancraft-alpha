@@ -7,6 +7,7 @@
 #include "GameMessage.pb.h"
 #include "fudancraft.h"
 #include "PathFinder/PathFinder.h"
+#include "SocketClient.h"
 
 class Unit;
 class UnitManager;
@@ -34,8 +35,12 @@ public:
 	void setTiledMap(cocos2d::TMXTiledMap* _tiledMap);
 	void setGridMap(GridMap* _grid_map);
 	void setPlayerID(int _player_id);
+	void setSocketClient(SocketClient* _socket_client);
 	void updateUnitsState();
 	void updatePathMessage(int _unit_id, const GridPath& _grid_path);
+
+	GridPoint getUnitPosition(int unit_id);
+	void genCreateMessage();
 
 	void initiallyCreateUnits();
 	void selectUnits(cocos2d::Point select_point);
@@ -49,6 +54,7 @@ private:
 	GameMessageSet* msgs;
 	cocos2d::TMXTiledMap* tiled_map = nullptr;
 	GridMap* grid_map = nullptr;
+	SocketClient* socket_client = nullptr;
 	int next_id = 1;
 
 	Unit* createNewUnit(int id, int camp, int uint_type, GridPoint crt_gp);
@@ -75,6 +81,7 @@ public:
 	GridPoint getGridPosition();
 	void setGridPath(const MsgGridPath& _grid_path);
 	void setState(int _state);
+	void setTarget(int _target_id);
 	int getState() const;
 	bool hasArrivedAtDest();
 	bool updateGridPostion();
@@ -89,6 +96,7 @@ public:
 		path_finder.searchPath();
 		path_finder.generatePath();
 		GridPath _grid_path = path_finder.getPath();
+
 		return(_grid_path);
 	}
 protected:
