@@ -28,6 +28,7 @@ class UnitManager : public cocos2d::Ref
 {
 public:
 	int player_id = 0;
+	GameMessageSet* msgs;
 
 	CREATE_FUNC(UnitManager);
 	bool init();
@@ -51,7 +52,6 @@ private:
 	//cocos2d::Vector<Unit*> own_units;
 	//cocos2d::Vector<Unit*> enemy_units;
 
-	GameMessageSet* msgs;
 	cocos2d::TMXTiledMap* tiled_map = nullptr;
 	GridMap* grid_map = nullptr;
 	SocketClient* socket_client = nullptr;
@@ -60,6 +60,7 @@ private:
 	Unit* createNewUnit(int id, int camp, int uint_type, GridPoint crt_gp);
 	void deselectAllUnits();
 
+	//friend class Unit;
 };
 
 class Unit : public cocos2d::Sprite
@@ -80,6 +81,7 @@ public:
 	void addToMaps(cocos2d::TMXTiledMap* _tiled_map, GridMap* _grid_map);
 	GridPoint getGridPosition();
 	void setGridPath(const MsgGridPath& _grid_path);
+	void motivate();
 	void setState(int _state);
 	void setTarget(int _target_id);
 	int getState() const;
@@ -100,13 +102,16 @@ public:
 		return(_grid_path);
 	}
 protected:
-	int state;
+	int state = 0;
+	bool moving = false;
 	int target_id;
-	bool selected;
+	bool selected = false;
 	GridPath grid_path;
 	GridPoint final_dest;
 	GridPoint cur_pos;
 	GridPoint cur_dest;
+
+	int rfp_cnt = 0;
 
 	int cd;
 	int hp;
@@ -125,6 +130,8 @@ protected:
 
 	friend void HPBar::update(float ft);
 	friend void UnitManager::updateUnitsState();
+
+	//friend class UnitManager;
 };
 
 #endif
