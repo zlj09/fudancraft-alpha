@@ -217,14 +217,30 @@ void Unit::update(float dt)
 	if (state == 2)
 	{
 		GridPoint target_pos = unit_manager->getUnitPosition(target_id);
+		Point target_fp = grid_map->getPointWithOffset(target_pos);
+		Point cur_fp = getPosition();
+		Vec2 dist_vec = target_fp - cur_fp;
 		if (target_pos == GridPoint(-1, -1))
 			state = 0;
 		else
-			if (final_dest == target_pos)
+			if ((dist_vec).length() < atk_range)
 			{
-				Vec2 distant = grid_map->getPointWithOffset(target_pos) - getPosition();
-
+				moving = false;
+				if (!cd)
+				{
+					unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_ATK, id, target_id, atk, camp, 0, {});
+					cd = cd_max;
+				}
+				else
+					cd--;
 			}
+			else
+				if (!(target_pos == final_dest))
+				{
+					final_dest = target_pos;
+					rfp_cnt--;
+					unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_RFP, id, 0, 0, camp, 0, { final_dest });
+				}
 	}
 }
 
@@ -324,6 +340,7 @@ void UnitManager::updateUnitsState()
 				u0->setGridPath(msg.grid_path());
 				u0->setState(2);
 				u0->setTarget(msg.unit_1());
+				u0->motivate();
 			}
 		}
 		else
@@ -348,6 +365,7 @@ void UnitManager::updateUnitsState()
 			else
 				new_msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_RFP, id, 0, 0, player_id, 0, { grid_dest });
 		}
+		else
 		if (msg.cmd_code() == GameMessage::CmdCode::GameMessage_CmdCode_UDP)
 		{
 			Unit* u0 = id_map.at(msg.unit_0());
@@ -356,6 +374,19 @@ void UnitManager::updateUnitsState()
 				u0->rfp_cnt = 0;
 				u0->setGridPath(msg.grid_path());
 				u0->motivate();
+			}
+		}
+		else
+		if (msg.cmd_code() == GameMessage::CmdCode::GameMessage_CmdCode_ATK)
+		{
+			int unitid_0 = msg.unit_0();
+			int unitid_1 = msg.unit_1();
+			int damage = msg.damage();
+			log("Attack! Unit %d -> Unit %d, Damage %d", unitid_0, unitid_1, damage);
+			Unit* unit_1 = id_map.at(unitid_1);
+			if (unit_1)
+			{
+
 			}
 		}
 	}
@@ -388,10 +419,10 @@ Unit* UnitManager::createNewUnit(int id, int camp, int unit_type, GridPoint crt_
 }
 
 
-//鐢熸垚鏂板崟浣嶆祴璇曠▼搴?
+//生成新单位测试程序
 void UnitManager::genCreateMessage()
 {
-	GridPoint init_gp = getUnitPosition(0);
+	GridPoint init_gp = getUnitPosition(player_id);
 	auto new_msg = msgs->add_game_message();
 	new_msg->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_CRT, next_id, 0, 0, player_id, 1, GridPath{ init_gp });
 	next_id += MAX_PLAYER_NUM;
@@ -411,8 +442,8 @@ void UnitManager::initiallyCreateUnits()
 		int type = dict["type"].asInt();
 		GridPoint init_gp = grid_map->getGridPoint({ cx, cy });
 
+			//GameMessage的格式、初始化方法、解释方法有待进一步探讨
 		if (camp == player_id)
-			//GameMessage鐨勬牸寮忋€佸垵濮嬪寲鏂规硶銆佽В閲婃柟娉曟湁寰呰繘涓€姝ユ帰璁?
 		{
 			auto new_msg = msgs->add_game_message();
 
