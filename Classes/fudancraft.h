@@ -16,3 +16,5 @@
 #define MAX_PLAYER_NUM 8
 
 #define TRACING_SENSOR 0.5f
+
+#define DISREFINDPATH_RANGE 100.0f
