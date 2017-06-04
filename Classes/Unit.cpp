@@ -159,7 +159,7 @@ void Unit::update(float dt)
 			else
 			{
 				cur_dest = cur_pos;
-				if (grid_path.size() && camp == unit_manager->player_id)
+				/*if (grid_path.size() && camp == unit_manager->player_id)
 				{
 					GridPath grid_path = planToMoveTo(final_dest);
 					if (grid_path.size())
@@ -167,7 +167,7 @@ void Unit::update(float dt)
 					else
 						unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_RFP, id, 0, 0, camp, 0, { final_dest });
 				
-				}
+				}*/
 			}			
 
 		if (hasArrivedAtDest())
@@ -186,8 +186,11 @@ void Unit::update(float dt)
 	{
 		GridPoint target_pos = unit_manager->getUnitPosition(target_id);
 		Point target_fp = grid_map->getPointWithOffset(target_pos);
+		Point final_fp = grid_map->getPointWithOffset(final_dest);
 		Point cur_fp = getPosition();
 		Vec2 dist_vec = target_fp - cur_fp;
+		Vec2 offset_vec = target_fp - final_fp;
+		
 		if (target_pos == GridPoint(-1, -1))
 			state = 0;
 		else
@@ -203,7 +206,7 @@ void Unit::update(float dt)
 					cd--;
 			}
 			else
-				if (!(target_pos == final_dest))
+				if (offset_vec.length() > TRACING_SENSOR * dist_vec.length())
 				{
 					final_dest = target_pos;
 					rfp_cnt--;

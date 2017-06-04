@@ -15,6 +15,11 @@ BattleScene* BattleScene::create(SocketClient* _socket_client, SocketServer* _so
 	return nullptr;
 }
 
+void BattleScene::create_figher(Ref*)
+{
+
+}
+
 Scene* BattleScene::createScene(SocketClient* _socket_client, SocketServer* _socket_server)
 {
 	auto scene = Scene::create();
@@ -53,6 +58,18 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 	unit_manager->setSocketClient(socket_client);
 	//unit_manager->setPlayerID(player_id);
 
+	control_panel_ = ControlPanel::create();
+	control_panel_->setAnchorPoint(Vec2(0,0));
+	control_panel_->setPosition(Vec2(origin.x + 60,	
+		origin.y+50));	
+	control_panel_->setFighterCallback([&](Ref*)
+	{
+		unit_manager->genCreateMessage(1, grid_map->getGridPoint(Vec2(Director::getInstance()->getVisibleSize().width / 2, Director::getInstance()->getVisibleSize().height / 2)));
+	}
+	);
+
+	addChild(control_panel_,4);
+
 	mouse_rect = DrawNode::create();
 	addChild(mouse_rect, 3);
 
@@ -84,6 +101,26 @@ void BattleScene::initPlayerID()
 {
 	player_id = socket_client->camp();
 }
+
+bool ControlPanel::init()
+{
+	if (!Menu::init())
+		return false;
+	fighter = MenuItemImage::create("/Picture/menu/airplane-menu-up.png",
+	                                     "/Picture/menu/airplane-menu-down.png"
+	);
+	
+	Menu::addChild(fighter);
+	Menu::alignItemsVertically();
+	return true;
+}
+
+void ControlPanel::setFighterCallback(std::function<void(Ref*)> callback)
+{
+	fighter->setCallback(callback);
+}
+
+
 
 void BattleScene::update(float f)
 {

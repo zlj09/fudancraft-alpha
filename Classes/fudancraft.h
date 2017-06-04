@@ -9,6 +9,8 @@
 
 #define POS_OFFSET 5
 
-#define MAX_PATH_FIND_TIMES 4
+#define MAX_PATH_FIND_TIMES 10
 
 #define MAX_PLAYER_NUM 8
+
+#define TRACING_SENSOR 0.2f

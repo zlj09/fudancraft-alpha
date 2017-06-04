@@ -117,6 +117,7 @@ protected:
 
 	int rfp_cnt = 0;
 
+
 	int cd;
 	int hp;
 

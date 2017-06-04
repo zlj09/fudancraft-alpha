@@ -20,6 +20,11 @@ GridMap* GridMap::create(const cocos2d::TMXTiledMap * tiled_map)
 	return nullptr;
 }
 
+GridPoint findFreePositionNear(const GridPoint& gp)
+{
+	return(1, 1);
+}
+
 bool GridMap::initWithTiledMap(const TMXTiledMap* tiled_map)
 {
 	map_height = int(tiled_map->getMapSize().height);

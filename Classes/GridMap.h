@@ -35,6 +35,7 @@ class GridMap : public cocos2d::Ref
 {
 public:
 	static GridMap* create(const cocos2d::TMXTiledMap * tiled_map);
+	GridPoint findFreePositionNear(const GridPoint& gp);
 	cocos2d::Point getPoint(const GridPoint& gp);
 	GridPoint getGridPoint(const cocos2d::Point& p);
 	cocos2d::Point getGridRectCenter(const GridRect& grec);
