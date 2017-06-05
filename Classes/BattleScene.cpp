@@ -68,7 +68,7 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 			unit_manager->produceInBase(1);
 	});
 
-	//TODO: add a callback function for create a tank and soldier
+
 	control_panel_->setTankCallback([&](Ref*)
 	{
 		unit_manager->produceInBase(2);
@@ -76,6 +76,7 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 	control_panel_->setSoldierCallback([&](Ref*){
 		unit_manager->produceInBase(3);
 	});
+
 
 
 	addChild(control_panel_,4);
@@ -199,7 +200,8 @@ void BattleScene::update(float f)
 
 bool BattleScene::onTouchBegan(cocos2d::Touch* pTouch, cocos2d::Event*)
 {
-	Point touch = pTouch->getLocation();//返回点击的位�?
+
+	Point touch = pTouch->getLocation();//杩斿洖鐐瑰嚮鐨勪綅缃?
 	last_touch = touch;
 
 	return true;
@@ -207,7 +209,9 @@ bool BattleScene::onTouchBegan(cocos2d::Touch* pTouch, cocos2d::Event*)
 
 void BattleScene::onTouchMoved(cocos2d::Touch* pTouch, cocos2d::Event* pEvent)
 {
-	Point touch = pTouch->getLocation();//返回点击的位�?
+
+	Point touch = pTouch->getLocation();//杩斿洖鐐瑰嚮鐨勪綅缃?
+
 
 	mouse_rect->clear();
 	Vec2 mouse_rect_points[4];
@@ -216,16 +220,18 @@ void BattleScene::onTouchMoved(cocos2d::Touch* pTouch, cocos2d::Event* pEvent)
 	mouse_rect_points[2] = touch;
 	mouse_rect_points[3] = Vec2(touch.x, last_touch.y);
 
-	//绘制空心多边�?
-	//填充颜色：Color4F(1, 0, 0, 0), 透明
-	//轮廓颜色：Color4F(0, 1, 0, 1), 绿色
+
+	//缁樺埗绌哄績澶氳竟褰?
+	//濉厖棰滆壊锛欳olor4F(1, 0, 0, 0), 閫忔槑
+	//杞粨棰滆壊锛欳olor4F(0, 1, 0, 1), 缁胯壊
 	mouse_rect->drawPolygon(mouse_rect_points, 4, Color4F(1, 0, 0, 0), 1, Color4F(0, 1, 0, 1));
 	mouse_rect->setVisible(true);
 }
 
 void BattleScene::onTouchEnded(cocos2d::Touch* pTouch, cocos2d::Event* pEvent)
 {
-	Point touch = pTouch->getLocation();//返回点击的位�?
+
+	Point touch = pTouch->getLocation();//杩斿洖鐐瑰嚮鐨勪綅缃?
 
 	mouse_rect->setVisible(false);
 
