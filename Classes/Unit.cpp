@@ -121,6 +121,11 @@ void Unit::setState(int _state)
 	state = _state;
 }
 
+void Unit::setDestination(const GridPoint& grid_dest)
+{
+	final_dest = grid_dest;
+}
+
 void Unit::setTarget(int _target_id)
 {
 	target_lastpos = unit_manager->getUnitPosition(_target_id);
@@ -147,7 +152,7 @@ bool Unit::isMobile()
 	return mobile;
 }
 
-bool Trajectory::init()
+bool TrajectoryEffect::init()
 {
 	if(!ParticleFire::init())
 		return false;
@@ -163,24 +168,42 @@ bool Trajectory::init()
  * \param from sender's position
  * \param to target's position
  */
-void Trajectory::setPath(cocos2d::Vec2 from, cocos2d::Vec2 to)
+void TrajectoryEffect::setPath(cocos2d::Vec2 from, cocos2d::Vec2 to)
 {
 	from_ = from;
 	to_ = to;
 	setPosition(from_);
-	log("fire start position:%f,%f", getPosition().x, getPosition().y);
+//	log("fire start position:%f,%f", getPosition().x, getPosition().y);
 //	log("start position:%f,%f", from.x, from.y);
 	move_ =(to_-from_).getNormalized()*speed_;
-	schedule(schedule_selector(Trajectory::updatefire));
+	schedule(schedule_selector(TrajectoryEffect::updatefire));
 }
 
-void Trajectory::updatefire(float)
+void TrajectoryEffect::updatefire(float)
 {
-	log("fire position:%f,%f", getPosition().x, getPosition().y);
+//	log("fire position:%f,%f", getPosition().x, getPosition().y);
 	if (((abs(getPosition().x-to_.x)<speed_ )&& (abs(getPosition().y - to_.y)<speed_)))
 		removeFromParent();
 	else
 		setPosition(getPosition() + move_);
+}
+
+bool ExplosionEffect::init()
+{
+	if (!ParticleFire::init())
+		return false;
+	setScale(0.0000008);
+	setDuration(1);
+	auto action = ScaleBy::create(0.5, 500000);
+	runAction(action);
+	scheduleOnce(schedule_selector(ExplosionEffect::remove), 1.2);	
+	setPositionType(PositionType::RELATIVE);
+	return true;
+}
+
+void ExplosionEffect::remove(float f)
+{
+	removeFromParent();
 }
 
 void Unit::addToMaps(const GridPoint & crt_gp, TMXTiledMap* _tiled_map, GridMap* _grid_map)
@@ -198,8 +221,12 @@ void Unit::addToMaps(const GridPoint & crt_gp, TMXTiledMap* _tiled_map, GridMap*
 
 void Unit::removeFromMaps()
 {
+	// add explosion effect
+	auto explosion_effect = ExplosionEffect::create();
+	explosion_effect->setPosition(this->getPosition());
+	getParent()->addChild(explosion_effect,20);
 	grid_map->leavePosition(cur_pos);
-	tiled_map->removeChild(this);
+	tiled_map->removeChild(this,1);
 }
 
 bool Unit::hasArrivedAtDest()
@@ -207,76 +234,120 @@ bool Unit::hasArrivedAtDest()
 	return(grid_map->hasApproached(getPosition(), cur_dest) && getGridPosition() == cur_dest);
 }
 
+void Unit::move()
+{
+	auto esp = (grid_map->getPointWithOffset(cur_dest) - getPosition()).getNormalized();
+	Point next_pos = getPosition() + esp * move_speed;
+	GridPoint next_gp = grid_map->getGridPoint(next_pos);
+
+	if (cur_pos == next_gp)
+	{
+		setPosition(next_pos);
+	}
+	else
+		if (grid_map->occupyPosition(next_gp))
+		{
+			roc_cnt = 0;
+			setPosition(next_pos);
+			grid_map->leavePosition(cur_pos);
+			cur_pos = next_gp;
+		}
+		else
+		{
+			/*if (roc_cnt < MAX_REOCCUPY_TIMES)
+			{
+			grid_path.push_back(cur_dest);
+			roc_cnt++;
+			}*/
+			cur_dest = cur_pos;
+
+			Point final_fp = grid_map->getPointWithOffset(final_dest);
+
+			if (camp == unit_manager->player_id && (final_fp - getPosition()).length() > DISREFINDPATH_RANGE)
+			{
+				tryToFindPath();
+			}
+
+			/*if (grid_path.size() && camp == unit_manager->player_id)
+			{
+			GridPath grid_path = planToMoveTo(final_dest);
+			if (grid_path.size())
+			unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_UDP, id, 0, 0, camp, 0, grid_path);
+			else
+			unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_RFP, id, 0, 0, camp, 0, { final_dest });
+
+			}*/
+		}
+
+	if (hasArrivedAtDest())
+		if (grid_path.size())
+		{
+			cur_dest = grid_path.back();
+			grid_path.pop_back();
+		}
+		else
+		{
+			moving = false;
+		}
+}
+
+void Unit::stall()
+{
+	if (stl_cnt > 0)
+		--stl_cnt;
+	else
+		if (camp == unit_manager->player_id)
+			tryToFindPath();
+}
+
+void Unit::tryToFindPath()
+{
+	if (camp != unit_manager->player_id)
+		return;
+
+	if (!grid_map->checkPosition(final_dest))
+	{
+		final_dest = grid_map->findFreePositionNear(final_dest);
+
+		log("Change Destination due to occupied: -> (%d, %d)", final_dest.x, final_dest.y);
+
+	}
+	GridPath grid_path = findPath(final_dest);
+	if (grid_path.size())
+	{
+		log("Unit %d, Success FP, RFP: %d", id, rfp_cnt);
+		rfp_cnt = 0;
+		stl_cnt = -1;
+		unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_UDP, id, 0, 0, camp, 0, grid_path);
+	}
+	else
+	{
+		log("Unit %d, Failure FP, RFP: %d", id, rfp_cnt);
+		stl_cnt = 1 << (2 + rfp_cnt);
+		rfp_cnt++;
+	}
+}
+
+GridPath Unit::findPath(const GridPoint & dest)
+{
+	std::vector<std::vector<int>>& gmap = grid_map->getLogicalGridMap();
+	GridPoint start = getGridPosition();
+
+	PathFinder path_finder(gmap, start.x, start.y, dest.x, dest.y);
+	path_finder.searchPath();
+	path_finder.generatePath();
+	GridPath _grid_path = path_finder.getPath();
+
+	return(_grid_path);
+}
+
 void Unit::update(float dt)
 {
 	if (moving)
-	{
-		auto esp = (grid_map->getPointWithOffset(cur_dest) - getPosition()).getNormalized();
-		Point next_pos = getPosition() + esp * move_speed;
-		GridPoint next_gp = grid_map->getGridPoint(next_pos);
-		
-		if (cur_pos == next_gp)
-		{
-			setPosition(next_pos);
-		}
-		else
-			if (grid_map->occupyPosition(next_gp))
-			{
-				roc_cnt = 0;
-				setPosition(next_pos);
-				grid_map->leavePosition(cur_pos);
-				cur_pos = next_gp;
-			}
-			else
-			{
-				/*if (roc_cnt < MAX_REOCCUPY_TIMES)
-				{
-					grid_path.push_back(cur_dest);
-					roc_cnt++;
-				}*/
-				cur_dest = cur_pos;
+		move();
 
-				Point final_fp = grid_map->getPointWithOffset(final_dest);
-				
-				if (camp == unit_manager->player_id && (final_fp - getPosition()).length() > DISREFINDPATH_RANGE)
-
-				{
-					if (!grid_map->checkPosition(final_dest))
-					{
-						final_dest = grid_map->findFreePositionNear(final_dest);
-
-						log("Change Destination due to occupied: -> (%d, %d)", final_dest.x, final_dest.y);
-
-					}
-					GridPath grid_path = planToMoveTo(final_dest);
-					if (grid_path.size())
-						unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_UDP, id, 0, 0, camp, 0, grid_path);
-					else
-						unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_RFP, id, 0, 0, camp, 0, { final_dest });
-				}
-
-				/*if (grid_path.size() && camp == unit_manager->player_id)
-				{
-					GridPath grid_path = planToMoveTo(final_dest);
-					if (grid_path.size())
-						unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_UDP, id, 0, 0, camp, 0, grid_path);
-					else
-						unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_RFP, id, 0, 0, camp, 0, { final_dest });
-				
-				}*/
-			}			
-
-		if (hasArrivedAtDest())
-			if (grid_path.size())
-			{
-				cur_dest = grid_path.back();
-				grid_path.pop_back();
-			}
-			else
-			{
-				moving = false;
-			}
-	}
+	if (stl_cnt >= 0)
+		stall();
 
 	if (state == 2)
 	{
@@ -290,19 +361,18 @@ void Unit::update(float dt)
 		if (target_gp == GridPoint(-1, -1))
 			state = 1;
 		else
-			if ((dist_vec).length() < atk_range)
+			if ((dist_vec).length() < atk_range && camp == unit_manager->player_id)
 			{
 				moving = false;
 				if (!cd)
 				{
 					unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_ATK, id, target_id, atk, camp, 0, {});
-					if (!getChildByName("trajectory"))
-					{
-						log("position %f,%f,%f,%f", cur_fp.x, cur_fp.y, target_fp.x, target_fp.y);
-						auto trajectory = Trajectory::create();
-						trajectory->setPath(cur_fp,(target_fp));
-						getParent()->addChild(trajectory, 2);
-					}
+				
+					//log("position %f,%f,%f,%f", cur_fp.x, cur_fp.y, target_fp.x, target_fp.y);
+					auto trajectory_effect = TrajectoryEffect::create();
+					trajectory_effect->setPath(cur_fp,(target_fp));
+					getParent()->addChild(trajectory_effect, 20);
+					
 					cd = cd_max;
 				}
 				else
@@ -313,8 +383,10 @@ void Unit::update(float dt)
 				{
 					target_lastpos = target_gp;
 					final_dest = target_gp;
-					rfp_cnt--;
-					unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_RFP, id, 0, 0, camp, 0, { final_dest });
+					if (rfp_cnt)
+						rfp_cnt--;
+					log("Unit %d, Tracing FP", id);
+					tryToFindPath();
 				}
 	}
 }
@@ -401,36 +473,39 @@ void UnitManager::updateUnitsState()
 		else
 		if (msg.cmd_code() == GameMessage::CmdCode::GameMessage_CmdCode_MOV)
 		{
-			log("Unit ID: %d, Final Dest(%d, %d)", msg.unit_0(), msg.grid_path().grid_point(0).x(), msg.grid_path().grid_point(0).y());
-			Unit* u0 = id_map.at(msg.unit_0());
-			if (u0)
-			{
-				u0->rfp_cnt = 0;
-				u0->setGridPath(msg.grid_path());
-				u0->setState(1);
+			log("MOV?");
+			//log("Unit ID: %d, Final Dest(%d, %d)", msg.unit_0(), msg.grid_path().grid_point(0).x(), msg.grid_path().grid_point(0).y());
+			//Unit* u0 = id_map.at(msg.unit_0());
+			//if (u0)
+			//{
+			//	u0->rfp_cnt = 0;
+			//	u0->setGridPath(msg.grid_path());
+			//	u0->setState(1);
 
-				u0->motivate();
+			//	u0->motivate();
 
-			}
+			//}
 		}
 		else
 		if (msg.cmd_code() == GameMessage::CmdCode::GameMessage_CmdCode_TRC)
 		{
-			if (!msg.grid_path().grid_point_size())
-				continue;
-			Unit* u0 = id_map.at(msg.unit_0());
-			if (u0)
-			{
-				u0->setGridPath(msg.grid_path());
-				u0->setState(2);
-				u0->setTarget(msg.unit_1());
-				u0->motivate();
-			}
+			log("TRC?");
+			//if (!msg.grid_path().grid_point_size())
+			//	continue;
+			//Unit* u0 = id_map.at(msg.unit_0());
+			//if (u0)
+			//{
+			//	u0->setGridPath(msg.grid_path());
+			//	u0->setState(2);
+			//	u0->setTarget(msg.unit_1());
+			//	u0->motivate();
+			//}
 		}
 		else
 		if (msg.cmd_code() == GameMessage::CmdCode::GameMessage_CmdCode_RFP)
 		{
-			int id = msg.unit_0();
+			log("RFP?");
+			/*int id = msg.unit_0();
 			Unit* unit = id_map.at(id);
 			if (!unit)
 				continue;
@@ -442,12 +517,8 @@ void UnitManager::updateUnitsState()
 			}
 			GridPoint grid_dest{ msg.grid_path().grid_point(0).x(), msg.grid_path().grid_point(0).y() };
 			log("Unit id: %d, Refind Path to: (%d, %d), Times: %d", id, grid_dest.x, grid_dest.y, unit->rfp_cnt);
-			GridPath grid_path = unit->planToMoveTo(grid_dest);	//锟街诧拷锟斤拷锟斤拷锟斤拷锟?
-			if (grid_path.size())
-				msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_UDP, id, 0, 0, player_id, 0, grid_path);
-
-			else
-				new_msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_RFP, id, 0, 0, player_id, 0, { grid_dest });
+			unit->setDestination(grid_dest);
+			unit->tryToFindPath();*/
 		}
 		else
 		if (msg.cmd_code() == GameMessage::CmdCode::GameMessage_CmdCode_UDP)
@@ -456,8 +527,12 @@ void UnitManager::updateUnitsState()
 			if (u0)
 			{
 				u0->rfp_cnt = 0;
-				u0->setGridPath(msg.grid_path());
-				u0->motivate();
+				const MsgGridPath& msg_grid_path = msg.grid_path();
+				if (msg_grid_path.grid_point_size())
+				{
+					u0->setGridPath(msg.grid_path());
+					u0->motivate();
+				}
 			}
 		}
 		else
@@ -588,8 +663,12 @@ void UnitManager::selectUnits(Point select_point)
 					Unit* unit = id_map.at(id);
 					if (!unit || !unit->isMobile())
 						continue;
-					GridPath grid_path = unit->planToMoveTo(id_unit.second->getGridPosition());
-					msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_TRC, id, id_unit.second->id, 0, player_id, 0, grid_path);
+					GridPoint target_pos = getUnitPosition(id_unit.first);
+					unit->setState(2);
+					unit->setTarget(id_unit.second->id);
+					unit->setDestination(target_pos);
+					log("Unit %d, start tracing FP", id);
+					unit->tryToFindPath();
 				}
 				return;
 			}
@@ -611,17 +690,9 @@ void UnitManager::selectUnits(Point select_point)
 			GridPoint grid_dest = grid_map->getGridPoint(select_point);
 			log("Unit ID: %d, plan to move to:(%d, %d)", id, grid_dest.x, grid_dest.y);
 
-			if (!grid_map->checkPosition(grid_dest))
-			{
-				log("Position Occupied: (%d, %d)", grid_dest.x, grid_dest.y);
-				return;
-			}
-
-			GridPath grid_path = unit->planToMoveTo(grid_dest);	//锟街诧拷锟斤拷锟斤拷锟斤拷锟?
-			if (grid_path.size())
-				msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_MOV, id, 0, 0, player_id, 0, grid_path);
-			else
-				msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_RFP, id, 0, 0, player_id, 0, {grid_dest});
+			unit->setDestination(grid_dest);
+			log("Unit %d, start moving FP", id);
+			unit->tryToFindPath();
 
 		}
 		return;
