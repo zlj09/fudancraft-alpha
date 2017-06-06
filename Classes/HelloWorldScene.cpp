@@ -62,7 +62,7 @@ void HelloWorld::menuCloseCallback(Ref* pSender)
 void HelloWorld::menuStartCallback(cocos2d::Ref* pSender)
 {
 	auto scene = StartMenu::createScene();
-	Director::getInstance()->replaceScene(scene);
+	Director::getInstance()->replaceScene(TransitionSplitCols::create(0.5, scene));
 }
 
 cocos2d::Scene* StartMenu::createScene()
@@ -109,19 +109,19 @@ void StartMenu::menuServerCallback(cocos2d::Ref* pSender)
 {
 	log("server button pressed");
 	auto scene = ServerMenu::createScene();
-	Director::getInstance()->replaceScene(scene);
+	Director::getInstance()->replaceScene(TransitionSplitCols::create(0.5,scene));
 }
 
 void StartMenu::menuClientCallback(cocos2d::Ref* pSender)
 {
 	auto scene = ClientMenu::createScene();
-	Director::getInstance()->replaceScene(scene);
+	Director::getInstance()->replaceScene(TransitionSplitCols::create(0.5, scene));
 }
 
 void StartMenu::menuBackCallback(cocos2d::Ref* pSender)
 {
 	auto scene = HelloWorld::createScene();
-	Director::getInstance()->replaceScene(scene);
+	Director::getInstance()->replaceScene(TransitionSplitCols::create(0.5, scene));
 }
 
 cocos2d::Scene* ServerMenu::createScene()
@@ -162,8 +162,15 @@ bool ServerMenu::init()
 	auto menu = Menu::create(start_label, start_game_label,back_label, NULL);
 	menu->setPosition(Vec2(origin.x + visibleSize.width / 2,
 		origin.y + visibleSize.height / 2));
-
 	menu->alignItemsVerticallyWithPadding(40);
+
+
+	connection_msg_ = Label::createWithTTF("", "/fonts/arial.ttf", 18);
+	connection_msg_->setAnchorPoint(Vec2(0.5, 0));
+	connection_msg_->setPosition(Vec2(origin.x + visibleSize.width / 2,
+		origin.y));
+	addChild(connection_msg_);
+
 	this->addChild(menu, 1);
 
 	return true;
@@ -176,6 +183,7 @@ void ServerMenu::menuStartServerCallback(cocos2d::Ref* pSender)
 		socket_server_ = SocketServer::create();
 		socket_client_ = SocketClient::create();
 		log("create server and client on 8008");
+		schedule(schedule_selector(ServerMenu::connectionSchdeule), 0.1);
 	}
 
 }
@@ -187,27 +195,51 @@ void ServerMenu::menuStartGameCallback(cocos2d::Ref* pSender)
 		//	auto scene = BattleScene::createScene(socket_client,socket_server);
 		socket_server_->button_start();
 		auto scene = BattleScene::createScene(socket_client_, socket_server_);
-		Director::getInstance()->replaceScene(scene);
+		Director::getInstance()->replaceScene(TransitionSplitCols::create(0.5, scene));
 		log("start game");
 	}
 }
 
 void ServerMenu::menuBackCallback(cocos2d::Ref* pSender)
 {
+	if (socket_server_)
+	{
+		unscheduleAllSelectors();
+//		try {
+			socket_client_->close();
+			delete socket_client_;
+//			std::this_thread::sleep_for(std::chrono::seconds(2));
+			socket_server_->close();
+			delete socket_server_;
+
+//		}
+//		catch(std::exception&e)
+//		{
+//			std::cerr << e.what();
+//		}
+		
+		socket_client_ = nullptr;
+		socket_server_ = nullptr;
+	}
 	auto scene = StartMenu::createScene();
-	Director::getInstance()->replaceScene(scene);
+	Director::getInstance()->replaceScene(TransitionSplitCols::create(0.5, scene));
 }
 
 void ServerMenu::editBoxReturn(cocos2d::ui::EditBox* editBox)
 {
 	log(editBox->getText());
 	int port = atoi(editBox->getText());
-	if (!socket_server_)
-	{
-		socket_server_ = SocketServer::create(port);
-		socket_client_ = SocketClient::create("127.0.0.1", port);
-		log("create server and client on %d", port);
-	}
+//	if (!socket_server_)
+//	{
+//		socket_server_ = SocketServer::create(port);
+//		socket_client_ = SocketClient::create("127.0.0.1", port);
+//		log("create server and client on %d", port);		
+//	}
+}
+
+void ServerMenu::connectionSchdeule(float f)
+{
+	connection_msg_->setString("Total connection num: " + std::to_string(socket_server_->connection_num()));
 }
 
 cocos2d::Scene* ClientMenu::createScene()
@@ -261,6 +293,13 @@ bool ClientMenu::init()
 		origin.y + visibleSize.height / 2));
 
 	menu->alignItemsVerticallyWithPadding(40);
+
+	connection_msg_ = Label::createWithTTF("","/fonts/arial.ttf",18);
+	connection_msg_->setAnchorPoint(Vec2(0.5, 0));
+	connection_msg_->setPosition(Vec2(origin.x + visibleSize.width / 2,
+	                                  origin.y));
+	addChild(connection_msg_);
+	 
 	this->addChild(menu, 1);
 
 	return true;
@@ -268,21 +307,32 @@ bool ClientMenu::init()
 
 void ClientMenu::menuStartGameCallback(cocos2d::Ref* pSender)
 {
-	auto ip_box= static_cast<ui::EditBox*>(getChildByTag(1));
-	std::string ip = ip_box->getText();
-	auto port_box= static_cast<ui::EditBox*>(getChildByTag(2));
-	int port = atoi(port_box->getText());
-	log("ip:%s, port:%d", ip.c_str(), port);
-	socket_client_ = SocketClient::create(ip,port);
+	if (!socket_client_)
+	{
+		auto ip_box = static_cast<ui::EditBox*>(getChildByTag(1));
+		std::string ip = ip_box->getText();
+		auto port_box = static_cast<ui::EditBox*>(getChildByTag(2));
+		int port = atoi(port_box->getText());
+		log("ip:%s, port:%d", ip.c_str(), port);
+		socket_client_ = SocketClient::create(ip, port);
+		schedule(schedule_selector(ClientMenu::startSchedule), 0.1);
+		//	std::async(&ClientMenu::wait_start, this);
+		//	wait_start();	
+	}
 
-//	std::async(&ClientMenu::wait_start, this);
-	wait_start();
 }
 
 void ClientMenu::menuBackCallback(cocos2d::Ref* pSender)
 {
+	if (socket_client_)
+	{
+		unscheduleAllSelectors();
+		socket_client_->close();
+		delete socket_client_;
+		socket_client_ = nullptr;
+	}
 	auto scene = StartMenu::createScene();
-	Director::getInstance()->replaceScene(scene);
+	Director::getInstance()->replaceScene(TransitionSplitCols::create(0.5, scene));
 
 }
 
@@ -293,5 +343,19 @@ void ClientMenu::wait_start()
 	log("start game");
 	auto scene = BattleScene::createScene(socket_client_, nullptr);
 	//	auto scene = BattleScene::createScene(socket_client_);
-	Director::getInstance()->replaceScene(scene);
+	Director::getInstance()->replaceScene(TransitionSplitCols::create(0.5, scene));
+}
+
+void ClientMenu::startSchedule(float f)
+{
+	switch((timer_++%32)/4)
+	{
+	case 0: connection_msg_->setString("Connected, wait for server"); break;
+	case 1: connection_msg_->setString("Connected, wait for server."); break;
+	case 2: connection_msg_->setString("Connected, wait for server.."); break;
+	case 3: connection_msg_->setString("Connected, wait for server..."); break;
+	default: break;
+	}
+	if (socket_client_->started())
+		wait_start();
 }

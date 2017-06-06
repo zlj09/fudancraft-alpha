@@ -12,6 +12,7 @@
 class Unit;
 class UnitManager;
 class Base;
+class BattleScene;
 
 class HPBar : public cocos2d::DrawNode
 {
@@ -34,18 +35,23 @@ public:
 
 	CREATE_FUNC(UnitManager);
 	bool init();
+	void initRandomGenerator();
 	void setMessageSet(GameMessageSet* _msgs);
 	void setTiledMap(cocos2d::TMXTiledMap* _tiledMap);
 	void setGridMap(GridMap* _grid_map);
 	void setPlayerID(int _player_id);
 	void setSocketClient(SocketClient* _socket_client);
+	void setBattleScene(BattleScene* _battle_scene);
 	void updateUnitsState();
 	void deleteUnit(int id);
+	void checkWinOrLose(int destroyed_base_id);
+	void genAttackEffect(int unit_id0, int unit_id1);
 
 	GridPoint getUnitPosition(int unit_id);
 	GridPoint getBasePosition();
 	void genCreateMessage(int _unit_type, const GridPoint& _crt_gp);
 	void produceInBase(int _unit_type);
+	int genRandom(int start, int end);
 
 	void initiallyCreateUnits();
 	void selectUnits(cocos2d::Point select_point);
@@ -53,11 +59,12 @@ public:
 private:
 	cocos2d::Map<int, Unit*> id_map;
 	std::vector<int> selected_ids;
-
+	std::map<int, int> base_map;
 
 	cocos2d::TMXTiledMap* tiled_map = nullptr;
 	GridMap* grid_map = nullptr;
 	SocketClient* socket_client = nullptr;
+	BattleScene* battle_scene = nullptr;
 	int next_id = 1;
 	int base_id = 1;
 
@@ -65,6 +72,8 @@ private:
 
 	Unit* createNewUnit(int id, int camp, int uint_type, GridPoint crt_gp);
 	void deselectAllUnits();
+
+	std::default_random_engine gen;				
 };
 
 class Unit : public cocos2d::Sprite
@@ -86,33 +95,26 @@ public:
 	void hideHPBar();
 	virtual void addToMaps(const GridPoint & crt_gp, cocos2d::TMXTiledMap* _tiled_map, GridMap* _grid_map);
 	void removeFromMaps();
-	GridPoint getGridPosition();
+	GridPoint getGridPosition() const;
 	void setGridPath(const MsgGridPath& _grid_path);
 	void motivate();
 	virtual void setState(int _state);
+	void setDestination(const GridPoint& grid_dest);
 	void setTarget(int _target_id);
+	void abandonTracing();
 	int getState() const;
+	int getType() const;
 	bool hasArrivedAtDest();
 	bool underAttack(int damage);
 	bool isMobile();
 	cocos2d::Color4F getCampColor();
 
-	GridPath planToMoveTo(GridPoint& dest)
-	{
-		return(searchForPath(grid_map->getLogicalGridMap(), getGridPosition(), dest));
-	}
-	GridPath searchForPath(std::vector<std::vector<int>>& gmap, const GridPoint& start, const GridPoint& dest)
-	{
-		PathFinder path_finder(gmap, start.x, start.y, dest.x, dest.y);
-		path_finder.searchPath();
-		path_finder.generatePath();
-		GridPath _grid_path = path_finder.getPath();
-
-		return(_grid_path);
-	}
+	void tryToFindPath();
 protected:
 	int state = 0;
 	bool moving = false;
+	bool tracing = false;
+	bool stalling = false;
 	int target_id;
 	bool selected = false;
 	GridPath grid_path;
@@ -126,7 +128,9 @@ protected:
 
 	int rfp_cnt = 0;
 	int roc_cnt = 0;
+	int stl_cnt = -1;
 
+	int type;
 	int cd;
 	int hp;
 
@@ -145,6 +149,13 @@ protected:
 	HPBar* hpbar = nullptr;
 	cocos2d::DrawNode* flag = nullptr;
 
+	void move();
+	void stall();
+	void trace();
+
+	GridPath findPath(const GridPoint& dest) const;
+	GridPath optimizePath(const GridPath& orig_paht) const;
+
 	friend void HPBar::update(float ft);
 	friend void UnitManager::updateUnitsState();
 
@@ -152,17 +163,29 @@ protected:
 };
 
 
-class Trajectory : public cocos2d::ParticleFire
+class TrajectoryEffect : public cocos2d::ParticleFire
 {
 public:
 	virtual bool init() override;
 	void setPath(cocos2d::Vec2, cocos2d::Vec2);
 
-	CREATE_FUNC(Trajectory);
+	CREATE_FUNC(TrajectoryEffect);
 private:
 	void updatefire(float);
 	cocos2d::Vec2 from_, to_,move_;
 	int speed_ = 3;
 
 };
+
+class ExplosionEffect : public cocos2d::ParticleFire
+{
+public:
+	virtual bool init() override;
+
+	CREATE_FUNC(ExplosionEffect);
+private:
+	void remove(float f);
+};
+
+
 #endif

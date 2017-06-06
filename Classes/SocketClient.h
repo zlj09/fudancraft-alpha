@@ -19,6 +19,9 @@ class SocketClient
 public:
 	static SocketClient* create(std::string ip = "127.0.0.1", int port = 8008);
 
+//	~SocketClient() {  io_service_.stop();do_close(); }
+
+	void close() { ; do_close();  }
 	void start()
 	{
 		start_connect();
@@ -36,9 +39,11 @@ public:
 
 	void do_close();
 
+	bool started() const { return start_flag_; }
 
-	int camp()const { while (!start_flag_); return camp_; }
-	int total()const { while (!start_flag_); return total_; }
+	int camp() const;
+
+	int total() const;
 
 private:
 	SocketClient::SocketClient(std::string ip, int port) : socket_(io_service_),
