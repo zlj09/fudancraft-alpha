@@ -94,7 +94,7 @@ void Unit::hideHPBar()
 	}
 }
 
-GridPoint Unit::getGridPosition()
+GridPoint Unit::getGridPosition() const
 {
 	if (grid_map)
 		return(grid_map->getGridPoint(getPosition()));
@@ -279,8 +279,11 @@ void Unit::move()
 
 			if (camp == unit_manager->player_id && (final_fp - getPosition()).length() > DISREFINDPATH_RANGE)
 			{
+				log("Unit ID: %d, find path again due to cur_dest occupied", id);
 				tryToFindPath();
 			}
+			else
+				log("Unit ID: %d, abandon cur_dest again due to cur_dest occupied and in the range of final_dest", id);
 
 			/*if (grid_path.size() && camp == unit_manager->player_id)
 			{
@@ -301,6 +304,7 @@ void Unit::move()
 		}
 		else
 		{
+			log("Unit ID: %d, stop move", id);
 			moving = false;
 		}
 }
@@ -328,15 +332,10 @@ void Unit::trace()
 	else
 		if ((dist_vec).length() < atk_range && camp == unit_manager->player_id)
 		{
-			moving = false;
+			//moving = false;
 			if (!cd)
 			{
 				unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_ATK, id, target_id, atk, camp, 0, {});
-
-				//log("position %f,%f,%f,%f", cur_fp.x, cur_fp.y, target_fp.x, target_fp.y);
-				auto trajectory_effect = TrajectoryEffect::create();
-				trajectory_effect->setPath(cur_fp, (target_fp));
-				getParent()->addChild(trajectory_effect, 20);
 
 				cd = cd_max;
 			}
@@ -370,7 +369,7 @@ void Unit::tryToFindPath()
 	GridPath grid_path = findPath(final_dest);
 	if (grid_path.size())
 	{
-		log("Unit %d, Success FP, RFP: %d", id, rfp_cnt);
+		log("Unit %d, Success FP, Path Length: %d, RFP: %d", id, grid_path.size(), rfp_cnt);
 		rfp_cnt = 0;
 		stl_cnt = -1;
 		unit_manager->msgs->add_game_message()->genGameMessage(GameMessage::CmdCode::GameMessage_CmdCode_UDP, id, 0, 0, camp, 0, grid_path);
@@ -383,7 +382,7 @@ void Unit::tryToFindPath()
 	}
 }
 
-GridPath Unit::findPath(const GridPoint & dest)
+GridPath Unit::findPath(const GridPoint & dest) const
 {
 	std::vector<std::vector<int>>& gmap = grid_map->getLogicalGridMap();
 	GridPoint start = getGridPosition();
@@ -392,8 +391,33 @@ GridPath Unit::findPath(const GridPoint & dest)
 	path_finder.searchPath();
 	path_finder.generatePath();
 	GridPath _grid_path = path_finder.getPath();
+	GridPath opt_path = optimizePath(_grid_path);
 
-	return(_grid_path);
+	return(opt_path);
+}
+
+GridPath Unit::optimizePath(const GridPath & orig_path) const
+{
+	int path_len = orig_path.size();
+	if (path_len < 3)
+		return(orig_path);
+
+	GridPath opt_path;
+	GridPoint prev_p = orig_path[0];
+	GridVec prev_dir = {2, 3};
+	for (int i = 1; i < path_len - 1; i++)
+	{
+		const auto & p = orig_path[i];
+		const auto & dir = (p - prev_p).getDirectionVector();
+		if (!(dir == prev_dir))
+		{
+			opt_path.push_back(prev_p);
+			prev_dir = dir;
+		}
+		prev_p = p;
+	}
+	opt_path.push_back(orig_path[path_len - 1]);
+	return(opt_path);
 }
 
 void Unit::update(float dt)
@@ -467,10 +491,18 @@ void UnitManager::produceInBase(int _unit_type)
 
 void UnitManager::updateUnitsState()
 {
-	socket_client->send_string(msgs->SerializeAsString());
+	auto sent_msg_str = msgs->SerializeAsString();
+	socket_client->send_string(sent_msg_str);
+	int sent_msg_num = msgs->game_message_size();
+	if (sent_msg_num)
+		log("Sent Message Num: %d, Sent Message string length: %d", sent_msg_num, sent_msg_str.length());
+
 	std::string msg_str = socket_client->get_string();
 	msgs = new GameMessageSet();
 	msgs->ParseFromString(msg_str);
+	int recv_msg_num = msgs->game_message_size();
+	if (recv_msg_num)
+		log("Received Message Num: %d, Received Message String Length: %d", recv_msg_num, msg_str.length());
 
 	GameMessageSet* new_msgs = new GameMessageSet();
 
@@ -501,6 +533,7 @@ void UnitManager::updateUnitsState()
 				const MsgGridPath& msg_grid_path = msg.grid_path();
 				if (msg_grid_path.grid_point_size())
 				{
+					log("Unit ID: %d, update path and start moving", msg.unit_0());
 					u0->setGridPath(msg.grid_path());
 					u0->motivate();
 				}
@@ -517,6 +550,7 @@ void UnitManager::updateUnitsState()
 			if (unit_1)
 			{
 				unit_1->displayHPBar();
+				genAttackEffect(unitid_0, unitid_1);
 				if (unit_1->underAttack(damage))
 				{
 					if (unit_1->getType() == 5)
@@ -559,6 +593,19 @@ void UnitManager::checkWinOrLose(int destroyed_base_id)
 
 }
 
+void UnitManager::genAttackEffect(int unit_id0, int unit_id1)
+{
+	//log("position %f,%f,%f,%f", cur_fp.x, cur_fp.y, target_fp.x, target_fp.y);
+	Unit* unit_0 = id_map.at(unit_id0);
+	Unit* unit_1 = id_map.at(unit_id1);
+	if (unit_0 && unit_1)
+	{
+		auto trajectory_effect = TrajectoryEffect::create();
+		trajectory_effect->setPath(unit_0->getPosition(), unit_1->getPosition());
+		tiled_map->addChild(trajectory_effect, 20);
+	}
+}
+
 Unit* UnitManager::createNewUnit(int id, int camp, int unit_type, GridPoint crt_gp)
 {
 	Unit* nu;
@@ -578,7 +625,11 @@ Unit* UnitManager::createNewUnit(int id, int camp, int unit_type, GridPoint crt_
 		tmp_base = Base::create("Picture/factory.jpg");
 		base_map[id] = camp;
 		if (camp == player_id)
+		{
 			base = tmp_base;
+			base_id = id;
+			battle_scene->focusOnBase();
+		}
 		nu = tmp_base;
 		break;
 	default:

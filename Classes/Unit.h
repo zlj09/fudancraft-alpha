@@ -44,6 +44,7 @@ public:
 	void updateUnitsState();
 	void deleteUnit(int id);
 	void checkWinOrLose(int destroyed_base_id);
+	void genAttackEffect(int unit_id0, int unit_id1);
 
 	GridPoint getUnitPosition(int unit_id);
 	GridPoint getBasePosition();
@@ -91,7 +92,7 @@ public:
 	void hideHPBar();
 	virtual void addToMaps(const GridPoint & crt_gp, cocos2d::TMXTiledMap* _tiled_map, GridMap* _grid_map);
 	void removeFromMaps();
-	GridPoint getGridPosition();
+	GridPoint getGridPosition() const;
 	void setGridPath(const MsgGridPath& _grid_path);
 	void motivate();
 	virtual void setState(int _state);
@@ -105,10 +106,9 @@ public:
 	bool isMobile();
 	cocos2d::Color4F getCampColor();
 
-
-
 	void tryToFindPath();
-	GridPath findPath(const GridPoint& dest);
+	GridPath findPath(const GridPoint& dest) const;
+	GridPath optimizePath(const GridPath& orig_paht) const;
 protected:
 	int state = 0;
 	bool moving = false;
