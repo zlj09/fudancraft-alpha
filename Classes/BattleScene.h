@@ -9,6 +9,7 @@
 
 class ControlPanel;
 class Money;
+class Notice;
 
 class MouseRect : public cocos2d::DrawNode
 {
@@ -38,6 +39,8 @@ public:
 
 	void focusOnBase();
 
+	void destroyReward(int destroyed_type);
+
 
 	void onKeyPressed(cocos2d::EventKeyboard::KeyCode, cocos2d::Event *) override;
 
@@ -66,6 +69,7 @@ private:
 	MouseRect* mouse_rect = nullptr;
 
 	Money* money = nullptr;
+	Notice* notice = nullptr;
 
 	cocos2d::Point last_touch{0, 0};
 	cocos2d::Point crusor_position{0, 0};
@@ -100,10 +104,24 @@ public:
 	void updateMoneyDisplay();
 	bool checkMoney(int cost) const;
 	void spendMoney(int cost);
+	void increaseMoney(int amount);
 private:
 	int money = 0;
 	int timer = 0;
 
 	int inc_prd = MONEY_INC_PERIOD;
 	int inc_amt = MONEY_INC_AMOUNT;
+};
+
+class Notice : public cocos2d::LabelBMFont
+{
+public:
+	CREATE_FUNC(Notice);
+	void update(float f) override;
+	void displayNotice(std::string ntc, int _ntc_life);
+	void displayNotice(std::string ntc);
+	bool init() override;
+private:
+	int timer = 0;
+	int ntc_life = 0;
 };

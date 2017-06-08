@@ -13,6 +13,7 @@ class Unit;
 class UnitManager;
 class Base;
 class BattleScene;
+class Notice;
 
 class HPBar : public cocos2d::DrawNode
 {
@@ -42,12 +43,14 @@ public:
 	void setPlayerID(int _player_id);
 	void setSocketClient(SocketClient* _socket_client);
 	void setBattleScene(BattleScene* _battle_scene);
+	void setNotice(Notice* _notice);
 	void updateUnitsState();
 	void deleteUnit(int id);
 	void checkWinOrLose(int destroyed_base_id);
 	void genAttackEffect(int unit_id0, int unit_id1);
 
 	GridPoint getUnitPosition(int unit_id);
+	int getUnitCamp(int unit_id);
 	GridPoint getBasePosition();
 	void genCreateMessage(int _unit_type, const GridPoint& _crt_gp);
 	void produceInBase(int _unit_type);
@@ -75,7 +78,9 @@ private:
 	void deselectAllUnits();
 	void setBase(int _base_id, Base* _base, GridPoint _base_pos);
 
-	std::default_random_engine gen;				
+	std::default_random_engine gen;		
+
+	Notice* notice = nullptr;
 };
 
 class Unit : public cocos2d::Sprite
@@ -113,10 +118,12 @@ public:
 
 	void tryToFindPath();
 protected:
+	int timer = 0;
 	int state = 0;
 	bool moving = false;
 	bool tracing = false;
 	bool stalling = false;
+	bool auto_atking = false;
 	int target_id;
 	bool selected = false;
 	GridPath grid_path;
@@ -140,10 +147,11 @@ protected:
 
 	int atk;
 	int atk_range;
-	int atk_period;
 	int hp_max;
 	int cd_max;
 	float move_speed;
+	int auto_atk_freq;
+	GridSize auto_atk_range;
 
 	cocos2d::TMXTiledMap* tiled_map = nullptr;
 	GridMap* grid_map = nullptr;
@@ -154,6 +162,8 @@ protected:
 	void move();
 	void stall();
 	void trace();
+	void auto_atk();
+	void searchForNearbyEnemy();
 
 	GridPath findPath(const GridPoint& dest) const;
 	GridPath optimizePath(const GridPath& orig_paht) const;
