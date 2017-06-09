@@ -1,5 +1,6 @@
 #pragma once
 #define ASIO_STANDALONE
+#define ASIO_HAS_STD_CHRONO
 #include "asio.hpp"
 #include <thread>
 #include <iostream>
@@ -40,7 +41,7 @@ private:
 
 	TcpConnection(asio::io_service& io_service, SocketServer* parent);;
 
-
+	void check_timer();
 	void delete_from_parent();
 
 	tcp::socket socket_;
@@ -51,6 +52,7 @@ private:
 	std::deque<socket_message> read_msg_deque_;
 	std::condition_variable data_cond_;
 	std::mutex mut_;
+//	asio::steady_timer steady_timer_;
 
 };
 
@@ -60,24 +62,7 @@ public:
 
 	static SocketServer* create(int port = 8008);
 //	~SocketServer() { acceptor_.close(); io_service_->stop(); }
-	void close() {
-//		if (button_thread_)
-//			try {
-//			button_thread_->join();
-//		}catch(std::exception&e){
-//			e.what();
-//		}
-		{
-//			std::unique_lock<std::mutex> lock(delete_mutex_);
-			connections_.clear();
-		}
-		io_service_->stop();
-		acceptor_.close();
-		thread_->join();
-		delete io_service_;
-		io_service_ = new asio::io_service;
-		
-	}
+	void close();
 	std::vector<TcpConnection::pointer> get_connection() const;
 
 	void remove_connection(TcpConnection::pointer p);

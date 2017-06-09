@@ -34,23 +34,44 @@ bool HelloWorld::init()
     
     auto visibleSize = Director::getInstance()->getVisibleSize();
     Vec2 origin = Director::getInstance()->getVisibleOrigin();   
-   
+	auto background = Sprite::create("/Picture/MenuItems/BackgroundPanel.png");
+	background->setPosition(origin + visibleSize / 2);
+	background->setScaleX(visibleSize.width / background->getContentSize().width);
+	background->setScaleY(visibleSize.height / background->getContentSize().height);
+	addChild(background, -5);
+//
+//	MenuItemFont::setFontName("fonts/Blackwood Castle Shadow.ttf");
+//	auto start_label = MenuItemFont::create("Start Game",CC_CALLBACK_1(HelloWorld::menuStartCallback,this));
+//	auto credits_label = MenuItemFont::create("Credits",CC_CALLBACK_1(HelloWorld::menuCreditsCallback,this));
+//	auto quit_label = MenuItemFont::create("Quit Game",CC_CALLBACK_1(HelloWorld::menuCloseCallback,this));
+//	MenuItemFont::setFontSize(24);
+	auto start_label = MenuItemImage::create("/Picture/MenuItems/ButtonStart.png",
+	                                         "/Picture/MenuItems/ButtonStartSelected.png",
+	                                         CC_CALLBACK_1(HelloWorld::menuStartCallback, this));
+	auto credits_label = MenuItemImage::create("/Picture/MenuItems/ButtonCredit.png",
+	                                           "/Picture/MenuItems/ButtonCreditSelected.png",
+	                                           CC_CALLBACK_1(HelloWorld::menuCreditsCallback, this));
+	auto quit_label = MenuItemImage::create("/Picture/MenuItems/ButtonQuit.png",
+	                                        "/Picture/MenuItems/ButtonQuitSelected.png",
+	                                        CC_CALLBACK_1(HelloWorld::menuCloseCallback, this));
 
-	MenuItemFont::setFontName("fonts/Blackwood Castle Shadow.ttf");
-	auto start_label = MenuItemFont::create("Start Game",CC_CALLBACK_1(HelloWorld::menuStartCallback,this));
-	auto credits_label = MenuItemFont::create("Credits",CC_CALLBACK_1(HelloWorld::menuCreditsCallback,this));
-	auto quit_label = MenuItemFont::create("Quit Game",CC_CALLBACK_1(HelloWorld::menuCloseCallback,this));
-	MenuItemFont::setFontSize(24);
 	
     auto menu = Menu::create(start_label,credits_label,quit_label,NULL);
     menu->setPosition(Vec2(origin.x + visibleSize.width/2,
                             origin.y + visibleSize.height/2));
 	
-	menu->alignItemsVerticallyWithPadding(40);
+	menu->alignItemsVerticallyWithPadding(10);
 	this->addChild(menu, 1);
 	CocosDenshion::SimpleAudioEngine::getInstance()->preloadBackgroundMusic("audio/killbill.wav");
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadBackgroundMusic("audio/mainv.wav");
 	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("audio/bomb1.wav");
-	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("audio/die1.wav");
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("audio/baseunderatack.wav");
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("audio/battlefieldcontrol.wav");
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("audio/selecttarget.wav");
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("audio/unitlost.wav");
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("audio/unitready.wav");
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("audio/insufficientfound.wav");
+	CocosDenshion::SimpleAudioEngine::getInstance()->preloadEffect("audio/traning.wav");
 
     return true;
 }
@@ -98,17 +119,33 @@ bool StartMenu::init()
 
 	auto visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
+	auto background = Sprite::create("/Picture/MenuItems/BackgroundPanel.png");
+	background->setPosition(origin + visibleSize / 2);
+	background->setScaleX(visibleSize.width / background->getContentSize().width);
+	background->setScaleY(visibleSize.height / background->getContentSize().height);
+	addChild(background, -5);
 
-	MenuItemFont::setFontName("fonts/Blackwood Castle Shadow.ttf");
-	MenuItemFont::setFontSize(24);
-	auto server_label = MenuItemFont::create("Start As Server", CC_CALLBACK_1(StartMenu::menuServerCallback, this));
-	auto client_label = MenuItemFont::create("Start As Client", CC_CALLBACK_1(StartMenu::menuClientCallback, this));
-	auto back_label = MenuItemFont::create("Back", CC_CALLBACK_1(StartMenu::menuBackCallback, this));
+	auto server_label = MenuItemImage::create("/Picture/MenuItems/ButtonStartAsServer.png",
+		"/Picture/MenuItems/ButtonStartAsServerSelected.png",
+		CC_CALLBACK_1(StartMenu::menuServerCallback, this));
+	auto client_label = MenuItemImage::create("/Picture/MenuItems/ButtonStartAsClient.png",
+		"/Picture/MenuItems/ButtonStartAsClientSelected.png",
+		CC_CALLBACK_1(StartMenu::menuClientCallback, this));
+	auto back_label = MenuItemImage::create("/Picture/MenuItems/ButtonBack.png",
+		"/Picture/MenuItems/ButtonBackSelected.png",
+		CC_CALLBACK_1(StartMenu::menuBackCallback, this));
+
+
+//	MenuItemFont::setFontName("fonts/Blackwood Castle Shadow.ttf");
+//	MenuItemFont::setFontSize(24);
+//	auto server_label = MenuItemFont::create("Start As Server", CC_CALLBACK_1(StartMenu::menuServerCallback, this));
+//	auto client_label = MenuItemFont::create("Start As Client", CC_CALLBACK_1(StartMenu::menuClientCallback, this));
+//	auto back_label = MenuItemFont::create("Back", CC_CALLBACK_1(StartMenu::menuBackCallback, this));
 	auto menu = Menu::create(server_label, client_label,back_label, NULL);
 	menu->setPosition(Vec2(origin.x + visibleSize.width / 2,
 		origin.y + visibleSize.height / 2));
 
-	menu->alignItemsVerticallyWithPadding(40);
+	menu->alignItemsVerticallyWithPadding(10);
 	this->addChild(menu, 1);
 
 	return true;
@@ -150,28 +187,47 @@ bool ServerMenu::init()
 	auto visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-	auto inputbox = ui::EditBox::create(Size(80, 60), ui::Scale9Sprite::create("/picture/editbox.png"));
+	auto inputbox = ui::EditBox::create(Size(80, 60), ui::Scale9Sprite::create("/picture/menuitems/InputPort.png"));
 	inputbox->setPosition(Vec2(origin.x + visibleSize.width / 2,
 		origin.y + visibleSize.height-inputbox->getContentSize().height));
-	inputbox->setFontSize(20);
+	inputbox->setTextHorizontalAlignment(TextHAlignment::CENTER);
 	inputbox->setMaxLength(7);
 	inputbox->setFontColor(Color3B::WHITE);
+	inputbox->setFontName("/fonts/AGENCYR.TTF");
+	inputbox->setFontSize(20);
 	inputbox->setText("8008");
 //	inputbox->setPlaceHolder("8008");
 	inputbox->setInputMode(ui::EditBox::InputMode::NUMERIC);
 	inputbox->setDelegate(this);
 
 	this->addChild(inputbox, 1);
-	
-	MenuItemFont::setFontName("fonts/Blackwood Castle Shadow.ttf");
-	MenuItemFont::setFontSize(24);
-	auto start_label = MenuItemFont::create("Start Server", CC_CALLBACK_1(ServerMenu::menuStartServerCallback, this));
-	auto start_game_label = MenuItemFont::create("Start Game", CC_CALLBACK_1(ServerMenu::menuStartGameCallback, this));
-	auto back_label = MenuItemFont::create("Back", CC_CALLBACK_1(ServerMenu::menuBackCallback, this));
+
+	auto background = Sprite::create("/Picture/MenuItems/BackgroundPanel.png");
+	background->setPosition(origin + visibleSize / 2);
+	background->setScaleX(visibleSize.width / background->getContentSize().width);
+	background->setScaleY(visibleSize.height / background->getContentSize().height);
+	addChild(background, -5);
+
+	auto start_label = MenuItemImage::create("/Picture/MenuItems/ButtonStartServer.png",
+		"/Picture/MenuItems/ButtonStartServerSelected.png",
+		CC_CALLBACK_1(ServerMenu::menuStartServerCallback, this));
+	auto start_game_label = MenuItemImage::create("/Picture/MenuItems/ButtonStartGame.png",
+		"/Picture/MenuItems/ButtonStartGameSelected.png",
+		CC_CALLBACK_1(ServerMenu::menuStartGameCallback, this));
+	auto back_label = MenuItemImage::create("/Picture/MenuItems/ButtonBack.png",
+		"/Picture/MenuItems/ButtonBackSelected.png",
+		CC_CALLBACK_1(ServerMenu::menuBackCallback, this));
+
+//	
+//	MenuItemFont::setFontName("fonts/Blackwood Castle Shadow.ttf");
+//	MenuItemFont::setFontSize(24);
+//	auto start_label = MenuItemFont::create("Start Server", CC_CALLBACK_1(ServerMenu::menuStartServerCallback, this));
+//	auto start_game_label = MenuItemFont::create("Start Game", CC_CALLBACK_1(ServerMenu::menuStartGameCallback, this));
+//	auto back_label = MenuItemFont::create("Back", CC_CALLBACK_1(ServerMenu::menuBackCallback, this));
 	auto menu = Menu::create(start_label, start_game_label,back_label, NULL);
 	menu->setPosition(Vec2(origin.x + visibleSize.width / 2,
 		origin.y + visibleSize.height / 2));
-	menu->alignItemsVerticallyWithPadding(40);
+	menu->alignItemsVerticallyWithPadding(10);
 
 
 	connection_msg_ = Label::createWithTTF("", "/fonts/arial.ttf", 18);
@@ -214,19 +270,10 @@ void ServerMenu::menuBackCallback(cocos2d::Ref* pSender)
 	if (socket_server_)
 	{
 		unscheduleAllSelectors();
-//		try {
-			
-//			std::this_thread::sleep_for(std::chrono::seconds(2));
-			
-
-//		}
-//		catch(std::exception&e)
-//		{
-//			std::cerr << e.what();
-//		}
 		socket_client_->close();
 		delete socket_client_;
 		socket_client_ = nullptr;
+		std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		socket_server_->close();
 		delete socket_server_;
 		socket_server_ = nullptr;
@@ -239,17 +286,15 @@ void ServerMenu::editBoxReturn(cocos2d::ui::EditBox* editBox)
 {
 	log(editBox->getText());
 	int port = atoi(editBox->getText());
-//	if (!socket_server_)
-//	{
-//		socket_server_ = SocketServer::create(port);
-//		socket_client_ = SocketClient::create("127.0.0.1", port);
-//		log("create server and client on %d", port);		
-//	}
+
 }
 
 void ServerMenu::connectionSchdeule(float f)
 {
-	connection_msg_->setString("Total connection num: " + std::to_string(socket_server_->connection_num()));
+	if (socket_server_->connection_num())
+		connection_msg_->setString("Total connection num: " + std::to_string(socket_server_->connection_num()));
+	else
+		connection_msg_->setString("Port already used, please change another one");
 }
 
 cocos2d::Scene* ClientMenu::createScene()
@@ -269,9 +314,11 @@ bool ClientMenu::init()
 	auto visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-	auto ip_box = ui::EditBox::create(Size(150, 60), ui::Scale9Sprite::create("/picture/editbox.png"));
+	auto ip_box = ui::EditBox::create(Size(150, 60), ui::Scale9Sprite::create("/picture/menuitems/InputIP.png"));
 	ip_box->setPosition(Vec2(origin.x + visibleSize.width / 2-ip_box->getContentSize().width/2,
 		origin.y + visibleSize.height - ip_box->getContentSize().height));
+	ip_box->setTextHorizontalAlignment(TextHAlignment::CENTER);
+	ip_box->setFontName("/fonts/AGENCYR.TTF");
 	ip_box->setFontSize(20);
 	ip_box->setMaxLength(20);
 	ip_box->setFontColor(Color3B::WHITE);
@@ -280,9 +327,11 @@ bool ClientMenu::init()
 //	inputbox->setInputMode(ui::EditBox::InputMode::NUMERIC);
 //	iptbox->setDelegate(this);
 	ip_box->setTag(1);
-	auto port_box = ui::EditBox::create(Size(80, 60), ui::Scale9Sprite::create("/picture/editbox.png"));
+	auto port_box = ui::EditBox::create(Size(80, 60), ui::Scale9Sprite::create("/picture/menuitems/InputPort.png"));
 	port_box->setPosition(Vec2(origin.x + visibleSize.width / 2 + port_box->getContentSize().width,
 		origin.y + visibleSize.height - port_box->getContentSize().height));
+	port_box->setTextHorizontalAlignment(TextHAlignment::CENTER);
+	port_box->setFontName("/fonts/AGENCYR.TTF");
 	port_box->setFontSize(20);
 	port_box->setMaxLength(20);
 	port_box->setFontColor(Color3B::WHITE);
@@ -293,11 +342,25 @@ bool ClientMenu::init()
 	port_box->setTag(2);
 	this->addChild(ip_box, 1);
 	this->addChild(port_box, 1);
-	MenuItemFont::setFontName("fonts/Blackwood Castle Shadow.ttf");
-	MenuItemFont::setFontSize(24);
-	auto start_label = MenuItemFont::create("Start", CC_CALLBACK_1(ClientMenu::menuStartGameCallback, this));
-//	auto start_game_label = MenuItemFont::create("Start Game", CC_CALLBACK_1(ClientMenu::menuStartGameCallback, this));
-	auto back_label = MenuItemFont::create("Back", CC_CALLBACK_1(ClientMenu::menuBackCallback, this));
+
+	auto background = Sprite::create("/Picture/MenuItems/BackgroundPanel.png");
+	background->setPosition(origin + visibleSize / 2);
+	background->setScaleX(visibleSize.width / background->getContentSize().width);
+	background->setScaleY(visibleSize.height / background->getContentSize().height);
+	addChild(background, -5);
+
+	auto start_label = MenuItemImage::create("/Picture/MenuItems/ButtonJoinGame.png",
+		"/Picture/MenuItems/ButtonJoinGameSelected.png",
+		CC_CALLBACK_1(ClientMenu::menuStartGameCallback, this));
+	auto back_label = MenuItemImage::create("/Picture/MenuItems/ButtonBack.png",
+		"/Picture/MenuItems/ButtonBackSelected.png",
+		CC_CALLBACK_1(ClientMenu::menuBackCallback, this));
+
+//	MenuItemFont::setFontName("fonts/Blackwood Castle Shadow.ttf");
+//	MenuItemFont::setFontSize(24);
+//	auto start_label = MenuItemFont::create("Start", CC_CALLBACK_1(ClientMenu::menuStartGameCallback, this));
+////	auto start_game_label = MenuItemFont::create("Start Game", CC_CALLBACK_1(ClientMenu::menuStartGameCallback, this));
+//	auto back_label = MenuItemFont::create("Back", CC_CALLBACK_1(ClientMenu::menuBackCallback, this));
 	auto menu = Menu::create(start_label, back_label, NULL);
 	menu->setPosition(Vec2(origin.x + visibleSize.width / 2,
 		origin.y + visibleSize.height / 2));
@@ -395,17 +458,20 @@ bool CreditsScene::init()
 		return false;
 	auto visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
+	CocosDenshion::SimpleAudioEngine::getInstance()->playBackgroundMusic("audio/mainv.wav");
 
 	std::string credits_content = "Producer/主创：\n赵凌丰\n朱灵均\n潘健\n\
-	User Interface/用户界面:\n赵凌丰\n\
 	Unit Logic/单位逻辑：\n朱灵均\n赵凌丰\n潘健\n\
+	Unit Design/单位设计：\n朱灵均\n潘健\n赵凌丰\n\
 	Map/地图：\n潘健\n\
 	Pathfinding/寻路：\n潘健\n朱灵均\n\
-	Socket/套接字编程：\n赵凌丰\n\
+	User Interface/用户界面:\n赵凌丰\n\
 	Network Synchronization Logic/网络同步策略：\n赵凌丰\n朱灵均\n\
+	Socket/套接字编程：\n赵凌丰\n\
 	Message Format/消息格式：\n朱灵均\n赵凌丰\n\
-	Art Designer/美工：\n潘健\n赵凌丰\n\n\
-	Special Thanks to/特别感谢：\n\n周学功老师\n\n\n Cocos2dx\nBoost::Asio\nGoogle Protocal Buffer\nTiled\nAdobe Photoshop\nMicrosoft Visual Studio\nGitHub\nFudan University\n\
+	Art Designer/美工：\n潘健\n赵凌丰\n\
+	Audio Effect/音效：\n赵凌丰\n\n\
+	Special Thanks to/特别感谢：\n\n周学功老师\n\n\n Cocos2dx\nBoost::Asio\nGoogle Protocal Buffer\nTiled\nAdobe Photoshop\nAdobe Audition\nMicrosoft Visual Studio\nGitHub\nFudan University\n\
 	";
 
 	label = Label::createWithTTF(credits_content, "/fonts/SIMLI.TTF",22);
@@ -428,6 +494,7 @@ bool CreditsScene::init()
 
 void CreditsScene::menuBackCallback(cocos2d::Ref* pSender)
 {
+	CocosDenshion::SimpleAudioEngine::getInstance()->stopBackgroundMusic();
 	auto scene = HelloWorld::createScene();
 	Director::getInstance()->replaceScene(TransitionSplitCols::create(0.5, scene));
 }
