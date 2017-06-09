@@ -24,13 +24,15 @@ void Fighter::motivate()
 void Fighter::setProperties()
 {
 	type = 1;
+
 	atk = 8;
 	atk_range = 100;
+  
 	hp_max = 100;
 
 	cd_max = 20;
 
-	move_speed = 3.0f;
+	move_speed = 4.0f;
 
 	mobile = true;
 
@@ -62,8 +64,7 @@ void Fighter::move()
 		setPosition(next_pos);
 		grid_map->leavePosition(cur_pos, false);
 		cur_pos = next_gp;
-	}
-		
+	}		
 
 	if (hasArrivedAtDest())
 		if (grid_path.size())
@@ -73,7 +74,7 @@ void Fighter::move()
 		}
 		else
 		{
-			if (id == grid_map->getUnitIDAt(cur_dest))
+			if (grid_map->checkPosition(cur_dest))
 			{
 				log("Unit ID: %d, fighter landing", id);
 				grid_map->occupyPosition(id, next_gp, true);
@@ -109,11 +110,13 @@ Tank* Tank::create(const std::string& filename)
 void Tank::setProperties()
 {
 	type = 2;
-	atk = 10;
+	atk = 50;
 	atk_range = 100;
+
 	hp_max = 200;
+
 	cd_max = 30;
-	move_speed = 1.0f;
+	move_speed = 2.0f;
 
 	z_index = 10;
 
@@ -146,8 +149,9 @@ void Soldier::setProperties()
 	type = 3;
 	atk = 5;
 	atk_range = 50;
+
 	hp_max = 80;
-	cd_max = 10;
+	cd_max = 5;
 	move_speed = 1.5f;
 
 	z_index = 10;
