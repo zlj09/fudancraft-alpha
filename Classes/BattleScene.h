@@ -11,12 +11,13 @@ class ControlPanel;
 class Money;
 class Notice;
 
+
 class MouseRect : public cocos2d::DrawNode
 {
 public:
 	CREATE_FUNC(MouseRect);
-	cocos2d::Point touch_start, touch_end;
-	cocos2d::Point start, end;
+	cocos2d::Point touch_start, touch_end;		//Touch start and end points
+	cocos2d::Point start, end;					//Mouse rectangle start and end points
 	void update(float f) override;
 };
 
@@ -50,18 +51,17 @@ public:
 
 	void menuBackCallback(cocos2d::Ref* pSender);
 private:
-//	void create_figher(Ref*);
-
 
 	int player_id = 0;
 
-	unsigned long long frame_cnt = 0;
+	unsigned long long frame_cnt = 0;			
 
 
 	SocketServer* socket_server = nullptr;
 	SocketClient* socket_client = nullptr;
 
-	int start_flag = 0;
+	bool start_flag = false;
+	bool end_flag = false;
 
 	cocos2d::TMXTiledMap* battle_map = nullptr;
 	GridMap* grid_map = nullptr;
@@ -79,7 +79,6 @@ private:
 
 	void initPlayerID();
 
-	//EventListenerMouse* _mouseListener;
 };
 
 class ControlPanel:public cocos2d::Menu

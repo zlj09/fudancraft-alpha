@@ -78,12 +78,13 @@ void BattleScene::onExit()
 void BattleScene::win()
 {
 	notice->displayNotice("You Win!");
+	end_flag = true;
 }
 
 void BattleScene::lose()
 {
 	notice->displayNotice("You Lose");
-	start_flag = 0;
+	end_flag = true;
 }
 
 Scene* BattleScene::createScene(SocketClient* _socket_client, SocketServer* _socket_server)
@@ -233,7 +234,7 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 
 
 
-	start_flag = 1;
+	start_flag = true;
 
 	return true;
 }
@@ -373,6 +374,9 @@ void BattleScene::onTouchEnded(cocos2d::Touch* pTouch, cocos2d::Event* pEvent)
 	GridPoint map_touch_grid_point = grid_map->getGridPoint(maptouch);
 
 	log("Map Touch Grid Point: (%d, %d)", map_touch_grid_point.x, map_touch_grid_point.y);
+
+	if (end_flag)
+		return;
 
 	if ((maptouch - last_maptouch).length() < MIN_SELECT_RECT_SIZE)
 		unit_manager->selectUnits(maptouch);
