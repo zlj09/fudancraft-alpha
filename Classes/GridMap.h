@@ -8,7 +8,7 @@ class GridSize;
 struct GridPoint
 {
 	GridPoint(int _x = 0, int _y = 0) : x(_x), y(_y) {}
-	int x, y;
+	int x, y;		//The integer coordinate of grid point
 
 
 	bool operator==(const GridPoint& gp2) const;
@@ -33,8 +33,8 @@ struct GridSize
 
 struct GridRect
 {
-	GridPoint gp;
-	GridSize size;
+	GridPoint gp;		//The left-down endpoint of the grid rectangle
+	GridSize size;		//The integer size of the grid rectangle
 
 	GridRect(GridPoint _gp = GridPoint(), GridSize _size = GridSize()) : gp(_gp), size(_size) {}
 };
@@ -43,7 +43,7 @@ class GridMap : public cocos2d::Ref
 {
 public:
 	static GridMap* create(const cocos2d::TMXTiledMap * tiled_map);
-	GridPoint findFreePositionNear(/*const GridVec& gv,*/ const GridPoint& gp);
+	GridPoint findFreePositionNear( const GridPoint& gp);
 	cocos2d::Point getPoint(const GridPoint& gp);
 	GridPoint getGridPoint(const cocos2d::Point& p);
 	cocos2d::Point getGridRectCenter(const GridRect& grec);
@@ -65,9 +65,9 @@ public:
 	bool hasApproached(const cocos2d::Point& cur_fp, const GridPoint& dest_gp);
 private:
 	bool initWithTiledMap(const cocos2d::TMXTiledMap* tiled_map);
-	std::vector<std::vector<int>> gmap;
-	std::vector<std::vector<int>> umap;
-	int map_width, map_height;
-	int grid_width, grid_height;
-	cocos2d::Vec2 offset_vec;
+	std::vector<std::vector<int>> gmap;		//Grid layer, records whether grids are occupied
+	std::vector<std::vector<int>> umap;		//Unit ID layer, records the IDs of units occupy the grids
+	int map_width, map_height;				//The width and height of the map (number of grids)
+	int grid_width, grid_height;			//The width and height of the grids (number of pixels)
+	cocos2d::Vec2 offset_vec;				//The offset vector caused by grid
 };

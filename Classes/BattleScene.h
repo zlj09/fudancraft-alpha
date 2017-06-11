@@ -108,11 +108,11 @@ public:
 	void spendMoney(int cost);
 	void increaseMoney(int amount);
 private:
-	int money = 0;
-	int timer = 0;
+	int money = 0;					//Current amount of money
+	int timer = 0;					
 
-	int inc_prd = MONEY_INC_PERIOD;
-	int inc_amt = MONEY_INC_AMOUNT;
+	int inc_prd = MONEY_INC_PERIOD;	//The period of money increasing
+	int inc_amt = MONEY_INC_AMOUNT;	//The amount of meney increasing per period
 };
 
 class Notice : public cocos2d::LabelBMFont
@@ -124,6 +124,6 @@ public:
 	void displayNotice(std::string ntc);
 	bool init() override;
 private:
-	int timer = 0;
-	int ntc_life = 0;
+	int timer = 0;		
+	int ntc_life = 0;	//The display life of a notice
 };

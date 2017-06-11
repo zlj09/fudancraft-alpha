@@ -258,7 +258,7 @@ void BattleScene::focusOnBase()
 void BattleScene::destroyReward(int destroyed_type)
 {
 	std::vector<int> reward_list = { 0, 5000, 4000, 2000, 0, 0, 10000 };
-	money->increaseMoney(reward_list[destroyed_type]);
+	money->increaseMoney(reward_list[destroyed_type] / 2);
 	money->updateMoneyDisplay();
 }
 
