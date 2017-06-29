@@ -26,15 +26,15 @@ void Fighter::setProperties()
 	type = 1;
 
 
-	atk = 8;
-	atk_range = 200;
+	atk = 10;
+	atk_range = 250;
 
   
 	hp_max = 100;
 
 	cd_max = 20;
 
-	move_speed = 4.0f;
+	move_speed = 4.5f;
 
 	mobile = true;
 
@@ -44,6 +44,7 @@ void Fighter::setProperties()
 	z_index = 15;
 
 	size = GridSize(1, 1);
+	vision_range = GridSize(9, 9);
 
 	cd = 0;
 	hp = hp_max;
@@ -66,6 +67,8 @@ void Fighter::move()
 		setPosition(next_pos);
 		grid_map->leavePosition(cur_pos, false);
 		cur_pos = next_gp;
+		if (camp == unit_manager->player_id)
+			grid_map->clearFog(GridRect(cur_pos, vision_range, true));
 	}		
 
 	if (hasArrivedAtDest())
@@ -139,7 +142,7 @@ void Tank::setProperties()
 	hp_max = 250;
 
 	cd_max = 45;
-	move_speed = 2.0f;
+	move_speed = 2.5f;
 
 
 	z_index = 10;
@@ -151,6 +154,7 @@ void Tank::setProperties()
 
 	size = GridSize(1, 1);
 	splash_range = GridSize(3, 3);
+	vision_range = GridSize(7, 7);
 
 	cd = 0;
 	hp = hp_max;
@@ -187,6 +191,7 @@ void Soldier::setProperties()
 	auto_atk_range = GridSize(3, 3);
 
 	size = GridSize(1, 1);
+	vision_range = GridSize(5, 5);
 
 	cd = 0;
 	hp = hp_max;
