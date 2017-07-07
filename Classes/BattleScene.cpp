@@ -11,6 +11,15 @@ void MouseRect::update(float f)
 	drawRect(start, end, Color4F(0, 1, 0, 1));
 }
 
+void MouseRect::reset()
+{
+	setVisible(false);
+	if (isScheduled(schedule_selector(MouseRect::update)))
+		unschedule(schedule_selector(MouseRect::update));
+	touch_start = touch_end = Point{ 0, 0 };
+	start = end = Point{ 0, 0 };
+}
+
 BattleScene* BattleScene::create(SocketClient* _socket_client, SocketServer* _socket_server)
 {
 	BattleScene *battle_scene = new (std::nothrow) BattleScene();
@@ -136,7 +145,7 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 
 	warfog_map = TMXTiledMap::create("map/WarFogMap.tmx");
 	warfog_map->setAnchorPoint(Vec2(0, 0));
-	battle_map->addChild(warfog_map, 100);
+	battle_map->addChild(warfog_map, 50);
 
 	grid_map = GridMap::create(battle_map);
 	auto fog_layer = warfog_map->getLayer("FogLayer");
@@ -197,7 +206,7 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 
 	mouse_rect = MouseRect::create();
 	mouse_rect->setVisible(false);
-	battle_map->addChild(mouse_rect, 15);
+	battle_map->addChild(mouse_rect, 60);
 
 	schedule(schedule_selector(BattleScene::update));
 
@@ -266,6 +275,7 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 	mini_map->setBattleScene(this);
 	mini_map->setPosition(50, 300);
 	mini_map->schedule(schedule_selector(MiniMap::update), 1);
+	mini_map_rect = Rect{ {50, 300}, {256, 256} };
 
 	start_flag = true;
 
@@ -274,18 +284,23 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 
 void BattleScene::focusOnBase()
 {
+	Point base_pos = grid_map->getPoint(unit_manager->getBasePosition());
+	focusOn(base_pos);
+}
+
+void BattleScene::focusOn(cocos2d::Point pos)
+{
 	auto visibleSize = Director::getInstance()->getVisibleSize();
-	GridPoint base_gp = unit_manager->getBasePosition();
-	Vec2 base_vec = grid_map->getPoint(base_gp) - visibleSize / 2;
-	if (battle_map->getBoundingBox().size.height < base_vec.y + visibleSize.height)
-		base_vec.y = battle_map->getBoundingBox().size.height - visibleSize.height;
-	if (battle_map->getBoundingBox().size.width < base_vec.x + visibleSize.width)
-		base_vec.x = battle_map->getBoundingBox().size.width - visibleSize.width;
-	if (base_vec.x < 0)
-		base_vec.x = 0;
-	if (base_vec.y < 0)
-		base_vec.y = 0;
-	battle_map->setPosition(Point(0, 0) - base_vec);
+	Vec2 map_vec = pos - visibleSize / 2;
+	if (battle_map->getBoundingBox().size.height < map_vec.y + visibleSize.height)
+		map_vec.y = battle_map->getBoundingBox().size.height - visibleSize.height;
+	if (battle_map->getBoundingBox().size.width < map_vec.x + visibleSize.width)
+		map_vec.x = battle_map->getBoundingBox().size.width - visibleSize.width;
+	if (map_vec.x < 0)
+		map_vec.x = 0;
+	if (map_vec.y < 0)
+		map_vec.y = 0;
+	battle_map->setPosition(Point(0, 0) - map_vec);
 }
 
 void BattleScene::destroyReward(int destroyed_type)
@@ -395,6 +410,15 @@ void BattleScene::onTouchEnded(cocos2d::Touch* pTouch, cocos2d::Event* pEvent)
 {
 
 	Point touch = pTouch->getLocation();//杩斿洖鐐瑰嚮鐨勪綅缃?
+
+	if (mini_map_rect.containsPoint(touch))
+	{
+		auto focus_point = (touch - mini_map_rect.origin) / 2 * grid_map->getGridWidth();
+		focusOn(focus_point);
+		mini_map->update(0.0f);
+		mouse_rect->reset();
+		return;
+	}
 
 	mouse_rect->setVisible(false);
 	if (mouse_rect->isScheduled(schedule_selector(MouseRect::update)))

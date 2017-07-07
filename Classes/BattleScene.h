@@ -19,6 +19,7 @@ public:
 	cocos2d::Point touch_start, touch_end;
 	cocos2d::Point start, end;
 	void update(float f) override;
+	void reset();
 };
 
 class BattleScene : public cocos2d::Layer
@@ -64,6 +65,8 @@ public:
 	 * \brief focus on user's base
 	 */
 	void focusOnBase();
+
+	void focusOn(cocos2d::Point pos);
 
 	/**
 	 * \brief get reward when destroy unit
@@ -115,6 +118,8 @@ private:
 
 	cocos2d::Point last_touch{0, 0};
 	cocos2d::Point crusor_position{0, 0};
+
+	cocos2d::Rect mini_map_rect{};
 
 	void initPlayerID();
 
