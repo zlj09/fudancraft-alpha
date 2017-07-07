@@ -62,7 +62,6 @@ bool GridMap::initWithTiledMap(const TMXTiledMap* tiled_map)
 	gmap = std::vector<std::vector<int>>(map_width, std::vector<int>(map_height, 0));
 	umap = std::vector<std::vector<int>>(map_width, std::vector<int>(map_height, 0));
 	fmap = std::vector<std::vector<int>>(map_width, std::vector<int>(map_height, 1));
-	mmap = std::vector<std::vector<int>>(map_width, std::vector<int>(map_height, -1));
 
 	auto decoration_layer = tiled_map->getLayer("InfoLayer");
 	for (int gx = 0; gx < map_width; gx++)
@@ -119,15 +118,13 @@ bool GridMap::checkPosition(const GridPoint & gp)
 	return false;
 }
 
-bool GridMap::occupyPosition(int id, int camp, const GridPoint& pos, bool occupy_grid)
+bool GridMap::occupyPosition(int id, const GridPoint& pos, bool occupy_grid)
 {
 	if (occupy_grid)
 		if (checkPosition(pos))
 		{
 			gmap[pos.x][pos.y] = 1;
 			umap[pos.x][pos.y] = id;
-			if (!fmap[pos.x][pos.y])
-				mmap[pos.x][pos.y] = camp;
 			return(true);
 		}
 		else
@@ -135,8 +132,6 @@ bool GridMap::occupyPosition(int id, int camp, const GridPoint& pos, bool occupy
 	else
 	{
 		umap[pos.x][pos.y] = id;
-		if (!fmap[pos.x][pos.y])
-			mmap[pos.x][pos.y] = camp;
 		return(true);
 	}
 
@@ -148,7 +143,7 @@ bool GridMap::occupyPosition(int id, int camp, const GridPoint& pos, bool occupy
 //	return(occupyPosition(id, getGridPoint(pos)), occupy_grid);
 //}
 
-bool GridMap::occupyPosition(int id, int camp, const GridRect& grec, bool occupy_grid)
+bool GridMap::occupyPosition(int id, const GridRect& grec, bool occupy_grid)
 {
 	if (checkPosition(grec))
 	{
@@ -158,8 +153,6 @@ bool GridMap::occupyPosition(int id, int camp, const GridRect& grec, bool occupy
 				if (occupy_grid)
 					gmap[x][y] = 1;
 				umap[x][y] = id;
-				if (!fmap[x][y])
-					mmap[x][y] = camp;
 			}
 		return(true);
 	}
@@ -182,8 +175,6 @@ void GridMap::leavePosition(const GridPoint& pos, bool occupy_grid)
 	if (occupy_grid)
 		gmap[pos.x][pos.y] = 0;
 	umap[pos.x][pos.y] = 0;
-	if (!fmap[pos.x][pos.y])
-		mmap[pos.x][pos.y] = 0;
 }
 
 void GridMap::leavePosition(const GridRect& grec, bool occupy_grid)
@@ -194,8 +185,6 @@ void GridMap::leavePosition(const GridRect& grec, bool occupy_grid)
 			if (occupy_grid)
 				gmap[x][y] = 0;
 			umap[x][y] = 0;
-			if (!fmap[x][y])
-				mmap[x][y] = 0;
 		}
 }
 
@@ -239,11 +228,6 @@ void GridMap::setFogLayer(cocos2d::TMXLayer* _fog_layer)
 	fog_layer = _fog_layer;
 }
 
-void GridMap::setUnitManager(UnitManager * _unit_manager)
-{
-	unit_manager = _unit_manager;
-}
-
 void GridMap::clearFog(const GridRect& grec)
 {
 	for (int x = grec.gp.x; x < grec.gp.x + grec.size.width; x++)
@@ -251,10 +235,6 @@ void GridMap::clearFog(const GridRect& grec)
 			if (checkPointInMap(x, y) && fmap[x][y])
 			{
 				fmap[x][y] = 0;
-				if (umap[x][y])
-					mmap[x][y] = unit_manager->getUnitCamp(umap[x][y]);
-				else
-					mmap[x][y] = 0;
 				auto fog_tile = fog_layer->getTileAt(Vec2(x, map_height - 1 - y));
 				if (fog_tile)
 					//fog_tile->setVisible(false);
@@ -262,10 +242,16 @@ void GridMap::clearFog(const GridRect& grec)
 			}
 }
 
-const std::vector<std::vector<int>>& GridMap::getMiniMapMatrix()
+const std::vector<std::vector<int>>& GridMap::getFogMap()
 {
-	return(mmap);
 	// TODO: 在此处插入 return 语句
+	return(fmap);
+}
+
+const std::vector<std::vector<int>>& GridMap::getUnitMap()
+{
+	// TODO: 在此处插入 return 语句
+	return(umap);
 }
 
 GridPoint operator+(const GridPoint & gp1, const GridPoint & gp2)

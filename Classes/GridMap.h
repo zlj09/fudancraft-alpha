@@ -84,9 +84,9 @@ public:
 	 * \brief try to occupy the position
 	 * \return true if success
 	 */
-	bool occupyPosition(int id, int camp, const GridPoint& pos, bool occupy_grid = true);
+	bool occupyPosition(int id, const GridPoint& pos, bool occupy_grid = true);
 	//bool occupyPosition(int id, int camp, const cocos2d::Point& pos, bool occupy_grid = true);
-	bool occupyPosition(int id, int camp, const GridRect& grec, bool occupy_grid = true);
+	bool occupyPosition(int id, const GridRect& grec, bool occupy_grid = true);
 	/**
 	 * \return if the point is in the map
 	 */
@@ -121,19 +121,17 @@ public:
 	 */
 	bool hasApproached(const cocos2d::Point& cur_fp, const GridPoint& dest_gp);
 	void setFogLayer(cocos2d::TMXLayer* _fog_layer);
-	void setUnitManager(UnitManager* _unit_manager);
 	void clearFog(const GridRect& grec);
-	const std::vector<std::vector<int>>& getMiniMapMatrix();
+	const std::vector<std::vector<int>>& getFogMap();
+	const std::vector<std::vector<int>>& getUnitMap();
 private:
 	bool initWithTiledMap(const cocos2d::TMXTiledMap* tiled_map);
 	
 	std::vector<std::vector<int>> gmap;
 	std::vector<std::vector<int>> umap;
 	std::vector<std::vector<int>> fmap;
-	std::vector<std::vector<int>> mmap;
 
 	cocos2d::TMXLayer* fog_layer;
-	UnitManager* unit_manager;
 
 	int map_width, map_height;
 	int grid_width, grid_height;

@@ -62,7 +62,7 @@ void Fighter::move()
 	}
 	else
 	{
-		grid_map->occupyPosition(id, camp, next_gp, false);
+		grid_map->occupyPosition(id, next_gp, false);
 		roc_cnt = 0;
 		setPosition(next_pos);
 		grid_map->leavePosition(cur_pos, false);
@@ -82,7 +82,7 @@ void Fighter::move()
 			if (grid_map->checkPosition(cur_dest))
 			{
 				log("Unit ID: %d, fighter landing", id);
-				grid_map->occupyPosition(id, camp, next_gp, true);
+				grid_map->occupyPosition(id, next_gp, true);
 				moving = false;
 			}
 			else

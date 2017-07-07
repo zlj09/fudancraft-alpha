@@ -145,8 +145,6 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 	unit_manager->setSocketClient(socket_client);
 	unit_manager->initRandomGenerator();
 
-	grid_map->setUnitManager(unit_manager);
-
 	control_panel_ = ControlPanel::create();
 	
 
@@ -257,6 +255,7 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 	mini_map = MiniMap::create();
 	addChild(mini_map, 40);
 	mini_map->setGridMap(grid_map);
+	mini_map->setUnitManager(unit_manager);
 	mini_map->setPosition(50, 300);
 	mini_map->schedule(schedule_selector(MiniMap::update), 1);
 
@@ -563,14 +562,30 @@ bool Notice::init()
 void MiniMap::update(float f)
 {
 	static std::vector<Color4F> color_list = { { 0, 0, 0, 0.5 }, {0.5, 0.5, 0.5, 0.5}, { 1, 0, 0, 1 },{ 0, 1, 0, 1 }, { 0, 0, 1, 1 }, {1, 1, 0, 1} };
-	const auto& mmap = grid_map->getMiniMapMatrix();
+	const auto& umap = grid_map->getUnitMap();
+	const auto& fmap = grid_map->getFogMap();
 	clear();
-	for (int x = 0; x < int(mmap.size()); x++)
-		for (int y = 0; y < int(mmap[x].size()); y++)
-			drawPoint(Point(x * 2, y * 2), 2, color_list[mmap[x][y] + 1]);
+	int color_index = 0;
+	for (int x = 0; x < int(fmap.size()); x++)
+		for (int y = 0; y < int(fmap[x].size()); y++)
+		{
+			if (fmap[x][y])
+				color_index = 0;
+			else
+				if (umap[x][y])
+					color_index = unit_manager->getUnitCamp(umap[x][y]) + 1;
+				else
+					color_index = 1;
+			drawPoint(Point(x * 2, y * 2), 2, color_list[color_index]);
+		}
 }
 
 void MiniMap::setGridMap(GridMap * _grid_map)
 {
 	grid_map = _grid_map;
+}
+
+void MiniMap::setUnitManager(UnitManager * _unit_manager)
+{
+	unit_manager = _unit_manager;
 }

@@ -50,7 +50,7 @@ void Base::addToMaps(const GridPoint & crt_gp, cocos2d::TMXTiledMap* _tiled_map,
 
 	_tiled_map->addChild(this, 1);
 
-	_grid_map->occupyPosition(id, camp, cur_grec);
+	_grid_map->occupyPosition(id, cur_grec);
 
 	if (camp == unit_manager->player_id)
 		grid_map->clearFog(GridRect(cur_pos, vision_range, true));

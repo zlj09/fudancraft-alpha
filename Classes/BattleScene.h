@@ -195,6 +195,8 @@ public:
 	CREATE_FUNC(MiniMap);
 	void update(float f) override;
 	void setGridMap(GridMap* _grid_map);
+	void setUnitManager(UnitManager* _unit_manager);
 private:
 	GridMap* grid_map;
+	UnitManager* unit_manager;
 };
