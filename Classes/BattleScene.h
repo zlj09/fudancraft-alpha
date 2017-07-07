@@ -83,6 +83,8 @@ public:
 	 * \brief back to main menu
 	 */
 	void menuBackCallback(cocos2d::Ref* pSender);
+
+	cocos2d::Rect getVisionRect();
 private:
 //	void create_figher(Ref*);
 
@@ -196,7 +198,9 @@ public:
 	void update(float f) override;
 	void setGridMap(GridMap* _grid_map);
 	void setUnitManager(UnitManager* _unit_manager);
+	void setBattleScene(BattleScene* _battle_scene);
 private:
 	GridMap* grid_map;
 	UnitManager* unit_manager;
+	BattleScene* battle_scene;
 };

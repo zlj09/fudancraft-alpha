@@ -124,6 +124,7 @@ public:
 	void clearFog(const GridRect& grec);
 	const std::vector<std::vector<int>>& getFogMap();
 	const std::vector<std::vector<int>>& getUnitMap();
+	int getGridWidth();
 private:
 	bool initWithTiledMap(const cocos2d::TMXTiledMap* tiled_map);
 	

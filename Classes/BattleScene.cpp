@@ -40,6 +40,13 @@ void BattleScene::menuBackCallback(cocos2d::Ref* pSender)
 	Director::getInstance()->replaceScene(TransitionSplitCols::create(0.5, scene));
 }
 
+cocos2d::Rect BattleScene::getVisionRect()
+{
+	auto visible_origin = Vec2(0, 0) - battle_map->getPosition();
+	auto visible_size = Director::getInstance()->getVisibleSize();
+	return cocos2d::Rect(visible_origin, visible_size);
+}
+
 
 void BattleScene::onExit()
 {
@@ -256,6 +263,7 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 	addChild(mini_map, 40);
 	mini_map->setGridMap(grid_map);
 	mini_map->setUnitManager(unit_manager);
+	mini_map->setBattleScene(this);
 	mini_map->setPosition(50, 300);
 	mini_map->schedule(schedule_selector(MiniMap::update), 1);
 
@@ -578,6 +586,12 @@ void MiniMap::update(float f)
 					color_index = 1;
 			drawPoint(Point(x * 2, y * 2), 2, color_list[color_index]);
 		}
+
+	const auto& visible_rect = battle_scene->getVisionRect();
+	int grid_width = grid_map->getGridWidth();
+	auto mini_rect_start = visible_rect.origin / grid_width * 2;
+	auto mini_rect_end = mini_rect_start + visible_rect.size / grid_width * 2;
+	drawRect(mini_rect_start, mini_rect_end, Color4F(1, 0, 1, 1));
 }
 
 void MiniMap::setGridMap(GridMap * _grid_map)
@@ -588,4 +602,9 @@ void MiniMap::setGridMap(GridMap * _grid_map)
 void MiniMap::setUnitManager(UnitManager * _unit_manager)
 {
 	unit_manager = _unit_manager;
+}
+
+void MiniMap::setBattleScene(BattleScene * _battle_scene)
+{
+	battle_scene = _battle_scene;
 }

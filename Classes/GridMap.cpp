@@ -254,6 +254,11 @@ const std::vector<std::vector<int>>& GridMap::getUnitMap()
 	return(umap);
 }
 
+int GridMap::getGridWidth()
+{
+	return grid_width;
+}
+
 GridPoint operator+(const GridPoint & gp1, const GridPoint & gp2)
 {
 	return GridPoint(gp1.x + gp2.x, gp1.y + gp2.y);
