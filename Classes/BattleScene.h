@@ -10,6 +10,7 @@
 class ControlPanel;
 class Money;
 class Notice;
+class MiniMap;
 
 class MouseRect : public cocos2d::DrawNode
 {
@@ -108,6 +109,7 @@ private:
 
 	Money* money = nullptr;
 	Notice* notice = nullptr;
+	MiniMap* mini_map = nullptr;
 
 	cocos2d::Point last_touch{0, 0};
 	cocos2d::Point crusor_position{0, 0};
@@ -185,4 +187,14 @@ public:
 private:
 	int timer = 0;
 	int ntc_life = 0;
+};
+
+class MiniMap : public cocos2d::DrawNode
+{
+public:
+	CREATE_FUNC(MiniMap);
+	void update(float f) override;
+	void setGridMap(GridMap* _grid_map);
+private:
+	GridMap* grid_map;
 };

@@ -145,6 +145,8 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 	unit_manager->setSocketClient(socket_client);
 	unit_manager->initRandomGenerator();
 
+	grid_map->setUnitManager(unit_manager);
+
 	control_panel_ = ControlPanel::create();
 	
 
@@ -252,7 +254,11 @@ bool BattleScene::init(SocketClient* _socket_client, SocketServer* _socket_serve
 	log("if back ground music playing %d", CocosDenshion::SimpleAudioEngine::getInstance()->isBackgroundMusicPlaying());
 	CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("audio/battlefieldcontrol.wav");
 
-
+	mini_map = MiniMap::create();
+	addChild(mini_map, 40);
+	mini_map->setGridMap(grid_map);
+	mini_map->setPosition(50, 300);
+	mini_map->schedule(schedule_selector(MiniMap::update), 1);
 
 	start_flag = true;
 
@@ -552,4 +558,19 @@ bool Notice::init()
 {
 	ntc_life = 100;
 	return initWithString("Welcome to FudanCraft!", "fonts/AgencyFB.fnt");
+}
+
+void MiniMap::update(float f)
+{
+	static std::vector<Color4F> color_list = { { 0, 0, 0, 0.5 }, {0.5, 0.5, 0.5, 0.5}, { 1, 0, 0, 1 },{ 0, 1, 0, 1 }, { 0, 0, 1, 1 }, {1, 1, 0, 1} };
+	const auto& mmap = grid_map->getMiniMapMatrix();
+	clear();
+	for (int x = 0; x < int(mmap.size()); x++)
+		for (int y = 0; y < int(mmap[x].size()); y++)
+			drawPoint(Point(x * 2, y * 2), 2, color_list[mmap[x][y] + 1]);
+}
+
+void MiniMap::setGridMap(GridMap * _grid_map)
+{
+	grid_map = _grid_map;
 }
